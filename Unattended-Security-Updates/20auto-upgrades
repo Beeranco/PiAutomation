@@ -1,0 +1,11 @@
+#Update-Package-Lists: 1 enable auto update, 0 for disable.
+APT::Periodic::Update-Package-Lists "1";
+
+#Download-Upgradeable-Packages: 1 enables auto download package, 0 for disable.
+APT::Periodic::Download-Upgradeable-Packages "1";
+
+#AutocleanInterval: Enable auto clean packages for X days. The configuration shows 3 days auto clean packages.
+APT::Periodic::AutocleanInterval "3";
+
+#Unattended-Upgrade: 1 enables auto upgrade, 0 for disable.
+APT::Periodic::Unattended-Upgrade "1";
