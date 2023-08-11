@@ -125,12 +125,12 @@ apt autoremove -y
 
 if [[ $OPTIONS == *"Domoticz"* ]]; then
   mkdir -p /etc/domoticz/
-  wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/DomoSetup.conf -O /etc/domoticz/setupVars.conf
+  wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
   
   mkdir -p /opt/domoticz/
   bash -c "$(curl -sSfL https://install.domoticz.com)"
   
-  wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/DomoService.conf  -O /etc/init.d/domoticz.sh
+  wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
   chmod +x /etc/init.d/domoticz.sh
   update-rc.d domoticz.sh defaults
   systemctl start domoticz
@@ -147,25 +147,30 @@ if [[ $OPTIONS == *"Node-RED"* ]]; then
   #systemctl start nodered
   #systemctl stop nodered
   #sed -i -e 's/\/\/theme\: \"\"/theme\: \"midnight-red\"/g' ~/.node-red/settings.js
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/NodeRED.conf -O /root/.node-red/settings.js
+  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Node-RED/NodeRED.conf -O /root/.node-red/settings.js
   
 fi
 
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   mkdir -p /opt/zigbee2mqtt/
   git clone --depth 1 https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/zb2mqtt.config -O /opt/zigbee2mqtt/data/configuration.yaml
+  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Zigbee/zb2mqtt.config -O /opt/zigbee2mqtt/data/configuration.yaml
   cd /opt/zigbee2mqtt/
   npm ci /opt/zigbee2mqtt/
   npm audit fix
   
   npm start /opt/zigbee2mqtt/
   cd ~
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/z2mqtt.service -O /etc/systemd/system/zigbee2mqtt.service
+  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Zigbee/z2mqtt.service -O /etc/systemd/system/zigbee2mqtt.service
   systemctl daemon-reload
   systemctl enable zigbee2mqtt
 fi
 
+if [[ $OPTIONS == *"Unattended Upgrades"* ]]; then
+  systemctl stop unattended-upgrades
+  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
+  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
+fi
 
 
 
