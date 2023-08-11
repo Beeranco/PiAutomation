@@ -125,14 +125,14 @@ Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
 // If automatic reboot is enabled and needed, reboot at the specific
 // time instead of immediately
 //  Default: "now"
-Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
 
 // Use apt bandwidth limit feature, this example limits the download
 // speed to 70kb/sec
 //Acquire::http::Dl-Limit "70";
 
 // Enable logging to syslog. Default is False
-Unattended-Upgrade::SyslogEnable "true";
+Unattended-Upgrade::SyslogEnable "false";
 
 // Specify syslog facility. Default is daemon
 // Unattended-Upgrade::SyslogFacility "daemon";
