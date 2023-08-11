@@ -6,6 +6,13 @@ sed -i -e 's/magenta/blue/g' /etc/newt/palette
 #OUTPUT='/dev/null'
 OUTPUT='>/dev/null 2>&1'
 APTMODE="debconf-apt-progress -- apt"
+REPO=PiAutomation
+GIT=https://raw.githubusercontent.com/Beeranco
+BRANCHE=main
+
+
+wget $GIT/$REPO/$BRANCHE/Domoticz/DomoService.conf
+ wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
 
 ##---------##
 #   Menu   #
@@ -91,6 +98,9 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
 fi
 if [[ $OPTIONS == *"Node-RED"* ]]; then
   echo "build-essential git curl" >> /tmp/install.list
+  else
+  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+  echo "nodejs" >> /tmp/install.list  
 fi
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   echo "git make g++ gcc" >> /tmp/install.list 
@@ -99,17 +109,12 @@ if [[ $OPTIONS == *"MQTT Broker"* ]]; then
   echo "mosquitto mosquitto-clients" >> /tmp/install.list
 fi
 if [[ $OPTIONS == *"Unattended Upgrades"* ]]; then
-  echo "unattended-upgrades" >> /tmp/install.list
+  echo "unattended-upgrades apt-listchanges" >> /tmp/install.list
 fi
 
 ##-----------##
 #   Updater   #
 ##-----------##
-
-if [[ $OPTIONS != *"Node-RED"* ]]; then
-  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-  echo "nodejs" >> /tmp/install.list  
-fi
 
 apt update
 apt remove --purge manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy* -y
@@ -125,12 +130,12 @@ apt autoremove -y
 
 if [[ $OPTIONS == *"Domoticz"* ]]; then
   mkdir -p /etc/domoticz/
-  wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
+  wget $GIT/$REPO/$BRANCHE/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
   
   mkdir -p /opt/domoticz/
   bash -c "$(curl -sSfL https://install.domoticz.com)"
   
-  wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
+  wget $GIT/$REPO/$BRANCHE/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
   chmod +x /etc/init.d/domoticz.sh
   update-rc.d domoticz.sh defaults
   systemctl start domoticz
@@ -139,103 +144,32 @@ fi
 if [[ $OPTIONS == *"Node-RED"* ]]; then
   bash <(curl -sL https://raw.githubusercontent.com/node-red/linux-installers/master/deb/update-nodejs-and-nodered) --confirm-root --confirm-install --skip-pi --node18 --no-init 
   systemctl enable nodered
-  
+  ###Test if nodered is not yet autostarted###
+  systemctl status nodered
+
   cd /root/.node-red/
   npm install @node-red-contrib-themes/midnight-red
   cd ~
-  
-  #systemctl start nodered
-  #systemctl stop nodered
-  #sed -i -e 's/\/\/theme\: \"\"/theme\: \"midnight-red\"/g' ~/.node-red/settings.js
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Node-RED/NodeRED.conf -O /root/.node-red/settings.js
-  
+  wget $GIT/$REPO/$BRANCHE/Node-RED/NodeRED.conf -O /root/.node-red/settings.js
 fi
 
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   mkdir -p /opt/zigbee2mqtt/
   git clone --depth 1 https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Zigbee/zb2mqtt.config -O /opt/zigbee2mqtt/data/configuration.yaml
+  wget $GIT/$REPO/$BRANCHE/Zigbee/zb2mqtt.config -O /opt/zigbee2mqtt/data/configuration.yaml
   cd /opt/zigbee2mqtt/
   npm ci /opt/zigbee2mqtt/
   npm audit fix
   
   npm start /opt/zigbee2mqtt/
   cd ~
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Zigbee/z2mqtt.service -O /etc/systemd/system/zigbee2mqtt.service
+  wget $GIT/$REPO/$BRANCHE/Zigbee/z2mqtt.service -O /etc/systemd/system/zigbee2mqtt.service
   systemctl daemon-reload
   systemctl enable zigbee2mqtt
 fi
 
 if [[ $OPTIONS == *"Unattended Upgrades"* ]]; then
   systemctl stop unattended-upgrades
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
-  wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
-fi
-
-
-
-
-
-apt-get install unattended-upgrades apt-listchanges
-
-
-
-
-
-
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - >/dev/null 2>&1
-apt-get install git gcc g++ make yarn nodejs python3-dev python3-pip mosquitto mosquitto-clients -qq -y
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Installation
-whiptail --title "Pi Automation" --msgbox "Setup is ready to install Domoticz" 8 78
-TERM=ansi whiptail --title "Pi Automation" --infobox "Installing Domoticz..." 8 78
-mkdir -p /opt/domoticz
-bash -c "$(curl -sSfL https://install.domoticz.com)"
-sed -i 's/USERNAME=pi/USERNAME=root/g' /opt/domoticz/domoticz.sh
-
-
-whiptail --title "Pi Automation" --msgbox "Setup is ready to install Node-RED" 8 78
-TERM=ansi whiptail --title "Pi Automation" --infobox "Installing Node-RED..." 8 78
-bash <(curl -sL https://raw.githubusercontent.com/node-red/linux-installers/master/deb/update-nodejs-and-nodered)
-systemctl enable --now nodered
-
-
-whiptail --title "Pi Automation" --msgbox "Setup is ready to install Zigbee2MQTT" 8 78
-TERM=ansi whiptail --title "Pi Automation" --infobox "Installing Zigbee2MQTT..." 8 78
-mkdir -p /opt/zigbee2mqtt
-git clone --depth 1 https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
-wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/zb2mqtt.config -O /opt/zigbee2mqtt/data/configuration.yaml
-cd /opt/zigbee2mqtt/
-npm ci /opt/zigbee2mqtt/
-#npm start /opt/zigbee2mqtt/
-cd ~
-wget -q https://raw.githubusercontent.com/Beeranco/PiAutomation/main/z2mqtt.service -O /etc/systemd/system/zigbee2mqtt.service
-systemctl daemon-reload
-
-	if (whiptail --title "Pi Automation" --yesno "Enable Zigbee2MQTT?" 8 78); then
-		Z2MQTT=yes
-	else
-		Z2MQTT=no
-	fi
-
-	if [ $Z2MQTT = yes ]; then
-	systemctl enable --now zigbee2mqtt
-	fi
-	if [ $Z2MQTT = no ]; then
-	systemctl disable --now zigbee2mqtt
-	fi
+  wget $GIT/$REPO/$BRANCHE/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
+  wget $GIT/$REPO/$BRANCHE/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
 fi
