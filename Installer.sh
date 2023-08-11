@@ -10,10 +10,6 @@ REPO=PiAutomation
 GIT=https://raw.githubusercontent.com/Beeranco
 BRANCHE=main
 
-
-wget $GIT/$REPO/$BRANCHE/Domoticz/DomoService.conf
- wget https://raw.githubusercontent.com/Beeranco/PiAutomation/main/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
-
 ##---------##
 #   Menu   #
 ##---------##
