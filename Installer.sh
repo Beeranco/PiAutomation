@@ -162,19 +162,6 @@ apt autoremove -y
 #   Installer   #
 ##-------------##
 
-if [[ $OPTIONS == *"Domoticz"* ]]; then
-  mkdir -p /etc/domoticz/
-  wget $GIT/$REPO/$BRANCH/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
-
-  mkdir -p /opt/domoticz/
-  bash -c "$(curl -sSfL https://install.domoticz.com)"
-
-  wget $GIT/$REPO/$BRANCH/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
-  chmod +x /etc/init.d/domoticz.sh
-  update-rc.d domoticz.sh defaults
-  systemctl start domoticz
-fi
-
 if [[ $OPTIONS == *"Node-RED"* ]]; then
   bash <(curl -sL https://raw.githubusercontent.com/node-red/linux-installers/master/deb/update-nodejs-and-nodered) --confirm-root --confirm-install --skip-pi --node18 --no-init 
   systemctl enable nodered
@@ -205,6 +192,19 @@ if [[ $OPTIONS == *"Unattended-Upgrades"* ]]; then
   systemctl stop unattended-upgrades
   wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
   wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
+fi
+
+if [[ $OPTIONS == *"Domoticz"* ]]; then
+  mkdir -p /etc/domoticz/
+  wget $GIT/$REPO/$BRANCH/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
+
+  mkdir -p /opt/domoticz/
+  bash -c "$(curl -sSfL https://install.domoticz.com)"
+
+  wget $GIT/$REPO/$BRANCH/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
+  chmod +x /etc/init.d/domoticz.sh
+  update-rc.d domoticz.sh defaults
+  systemctl start domoticz
 fi
 
 
