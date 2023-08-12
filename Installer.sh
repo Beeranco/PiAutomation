@@ -4,8 +4,6 @@
 #   Static Vars   #
 ##---------------##
 
-sed -i -e 's/magenta/blue/g' /etc/newt/palette
-#OUTPUT='/dev/null'
 OUTPUT='>/dev/null 2>&1'
 APTMODE="debconf-apt-progress -- apt"
 REPO=PiAutomation
@@ -54,6 +52,8 @@ if [[ $INSTALL == no ]]; then
   exit
 fi
 
+NAME=$(whiptail --nocancel --inputbox "What is your name?" 8 39 John --title "Welcome" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --nocancel --inputbox "What is the name of this machine?" 8 39 Raspberry --title "Welcome $NAME!" 3>&1 1>&2 2>&3)
 
 ##-------------##
 #   Pre-Check   #
@@ -89,6 +89,8 @@ OPTIONS=$(whiptail --title "Configure Options" --checklist \
 
 TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Raspberry Pi" 8 78
 sleep 3
+
+hostnamectl set-hostname $HOST
 
 if grep -Fxq "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
 then
@@ -132,11 +134,11 @@ if [[ $OPTIONS == *"Node-RED"* ]]; then
   echo "build-essential git curl" >> /tmp/install.list
   else
   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-  echo "nodejs" >> /tmp/install.list  
+  echo "nodejs" >> /tmp/install.list
 fi
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
-  echo "git make g++ gcc" >> /tmp/install.list 
-fi  
+  echo "git make g++ gcc" >> /tmp/install.list
+fi
 if [[ $OPTIONS == *"MQTT-Broker"* ]]; then
   echo "mosquitto mosquitto-clients" >> /tmp/install.list
 fi
@@ -163,10 +165,10 @@ apt autoremove -y
 if [[ $OPTIONS == *"Domoticz"* ]]; then
   mkdir -p /etc/domoticz/
   wget $GIT/$REPO/$BRANCH/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
-  
+
   mkdir -p /opt/domoticz/
   bash -c "$(curl -sSfL https://install.domoticz.com)"
-  
+
   wget $GIT/$REPO/$BRANCH/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
   chmod +x /etc/init.d/domoticz.sh
   update-rc.d domoticz.sh defaults
@@ -192,7 +194,6 @@ if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   cd /opt/zigbee2mqtt/
   npm ci /opt/zigbee2mqtt/
   npm audit fix
-  
   npm start /opt/zigbee2mqtt/
   cd ~
   wget $GIT/$REPO/$BRANCH/Zigbee/z2mqtt.service -O /etc/systemd/system/zigbee2mqtt.service
@@ -218,6 +219,10 @@ sed -i 's/\"//g' /etc/installedmodules
 ##-------------##
 #   Finishing   #
 ##-------------##
+
+wget $GIT/$REPO/$BRANCH/Updater.sh -O /opt/updater.sh
+wget $GIT/$REPO/$BRANCH/MOTD/greetings.sh -O /etc/profile.d/greeting.sh
+sed -i -e "s/%name%/$NAME/g" /etc/profile.d/greeting.sh
 
 whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Hit OK to continue." 8 78
 reboot
