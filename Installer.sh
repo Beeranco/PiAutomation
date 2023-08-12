@@ -61,8 +61,9 @@ fi
 
 TERM=ansi whiptail --title "Pre-Check" --infobox "Please wait..." 8 78
 sleep 3
-ping -c 1 192.168.1.102 > /dev/null && HOSTUP=yes || HOSTUP=no
 
+TZDATA=`timedatectl`
+ping -c 1 192.168.1.102 > /dev/null && HOSTUP=yes || HOSTUP=no
 if [[ $HOSTUP == yes ]]; then
   echo > /dev/tcp/192.168.1.102/80 && echo 'Acquire::http::Proxy "http://192.168.1.102:80";'> /etc/apt/apt.conf.d/01prox || TERM=ansi whiptail --title "Pre-Check" --infobox "Not using an APT-Cache server" 8 78
   sleep 3
@@ -88,8 +89,22 @@ OPTIONS=$(whiptail --title "Configure Options" --checklist \
 
 TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Raspberry Pi" 8 78
 sleep 3
-echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
-rfkill unblock wifi
+
+if grep -Fxq "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
+then
+    echo "Wifi properly configured"
+else
+  echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
+  rfkill unblock wifi
+fi
+
+if grep -q "Amsterdam" <<< "$TZDATA"; then
+    echo "Timezone properly configured"
+else
+    timedatectl set-timezone Europe/Amsterdam
+fi
+
+
 sed -i -e 's/dtoverlay=vc4-kms-v3d/dtoverlay=vc4-fkms-v3d/g' /boot/config.txt
 echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/01Recommends
 echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/01Suggests.
