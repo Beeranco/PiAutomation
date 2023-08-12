@@ -199,3 +199,10 @@ fi
 echo $OPTIONS > /etc/installedmodules
 sed -i 's/\s\+/\n/g' /etc/installedmodules
 sed -i 's/\"//g' /etc/installedmodules
+
+##-------------##
+#   Finishing   #
+##-------------##
+
+whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Hit OK to continue." 8 78
+reboot
