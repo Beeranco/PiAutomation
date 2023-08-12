@@ -220,9 +220,22 @@ sed -i 's/\"//g' /etc/installedmodules
 #   Finishing   #
 ##-------------##
 
+IP=`hostname -I`
+IP=$(echo $IP | tr -d ' ')
+
 wget $GIT/$REPO/$BRANCH/Updater.sh -O /opt/updater.sh
 wget $GIT/$REPO/$BRANCH/MOTD/greetings.sh -O /etc/profile.d/greeting.sh
 sed -i -e "s/%name%/$NAME/g" /etc/profile.d/greeting.sh
+
+if grep -q Domoticz "/etc/installedmodules"; then
+  whiptail --title "Remember" --msgbox "After a reboot Domoticz is accessible on:\nhttp://$IP:8080" 8 78
+fi
+if grep -q Node-RED "/etc/installedmodules"; then
+  whiptail --title "Remember" --msgbox "After a reboot Node-RED is accessible on:\nhttp://$IP:1880" 8 78
+fi
+if grep -q Zigbee2MQTT "/etc/installedmodules"; then
+  whiptail --title "Remember" --msgbox "After a reboot Zigbee2MQTT is accessible on:\nhttp://$IP:5002" 8 78
+fi
 
 whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Hit OK to continue." 8 78
 reboot
