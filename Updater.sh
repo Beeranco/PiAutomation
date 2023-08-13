@@ -81,7 +81,7 @@ echo "Testing output"
 echo Domoticz $DomoUpd
 echo NodeRed $NodeUpd
 echo Zigbee $ZB2mUpd
-echo Debian $OSUpd
+echo Debian $osUpd
 echo ""
 
 
