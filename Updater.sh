@@ -1,14 +1,5 @@
 #!/bin/bash
 
-##-------------##
-#   Reminders   #
-##-------------##
-
-#Updating Domoticz every 6 monts
-#Node-RED has a cycle of about every 3 months
-#Zigbee2MQTT about every month
-#OS updates every 2 weeks
-
 ##---------------##
 #   Static Vars   #
 ##---------------##
@@ -51,27 +42,27 @@ fi
 ##-------------##
 
 if grep -q Domoticz "/etc/installedmodules"; then
-  if [[ ! $(find "$DomoChk" -newermt "1 hours ago") ]]; then
+  if [[ ! $(find "$DomoChk" -newermt "4368 hours ago") ]]; then
     DomoUpd=true
     else
     DomoUpd=false
   fi
 fi
 if grep -q Node-RED "/etc/installedmodules"; then
-  if [[ ! $(find "$NodeChk" -newermt "1 hours ago") ]]; then
+  if [[ ! $(find "$NodeChk" -newermt "2184 hours ago") ]]; then
     NodeUpd=true
     else
     NodeUpd=false
   fi
 fi
 if grep -q Zigbee2MQTT "/etc/installedmodules"; then
-  if [[ ! $(find "$ZB2mChk" -newermt "1 hours ago") ]]; then
+  if [[ ! $(find "$ZB2mChk" -newermt "720 hours ago") ]]; then
     ZB2mUpd=true
     else
     ZB2mUpd=false
   fi
 fi
-if [[ ! $(find "$osChk" -newermt "1 hours ago") ]]; then
+if [[ ! $(find "$osChk" -newermt "336 hours ago") ]]; then
   osUpd=true
   else
   osUpd=false
@@ -88,13 +79,6 @@ echo ""
 ##-----------##
 #   Updater   #
 ##-----------##
-
-#echo "Test variables for updater"
-#DomoUpd=false
-#NodeUpd=false
-#ZB2mUpd=false
-#osUpd=false
-#echo ""
 
 if [[ $DomoUpd == false ]] && [[ $NodeUpd == false ]] && [[ $ZB2mUpd == false ]] && [[ $osUpd == false ]]; then
   whiptail --title "Updater" --msgbox "All packages have been updated recently enough, you're up-to-date! \nThank you $NAME for checking anyway :)" 8 78
