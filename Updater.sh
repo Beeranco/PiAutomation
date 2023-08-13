@@ -13,7 +13,15 @@
 #   Static Vars   #
 ##---------------##
 
-DATE=$(date +"%m-%d-%Y")
+OUTPUT='/dev/null'
+APTMODE="debconf-apt-progress -- apt"
+PKGM="$APTMODE"
+PKGUD="$PKGM update"
+PKGUP="$PKGM upgrade -y"
+PKGI="${PKGM} install -y"
+PKRM="$PKGM remove --purge -y"
+PKARM="$PKGM autoremove -y"
+DATE=$(date "+%d-%m-%Y")
 NAME=$(<"/etc/username")
 DomoChk=/opt/backups/timestamps/Domoticz.update
 NodeChk=/opt/backups/timestamps/NodeRED.update
@@ -133,9 +141,9 @@ else
     REBOOT=yes
     echo "Updated on: $DATE" > /opt/backups/timestamps/OS.update
     sleep 3
-    apt update
-    apt upgrade -y
-    apt autoremove -y
+    $PKGUD
+    $PKGUP
+    $PKARM
     fi
 fi
 
@@ -159,37 +167,3 @@ TERM=ansi whiptail --title "Updater" --infobox "Thank you for using the updater 
 sleep 5
 clear
 exit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##-----------##
-#   Updater   #
-##-----------##
-
-
-
-
-
-if [[ $Domoticz == *"yes"* ]]; then
-
-fi
-if [[ $NodeRED == *"yes"* ]]; then
-
-fi
-if [[ $Zigbee2MQTT == *"yes"* ]]; then
-
-fi
