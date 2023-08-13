@@ -107,6 +107,8 @@ TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Raspberry Pi" 
 sleep 3
 
 hostnamectl set-hostname $HOST
+sed -i '/raspberrypi/d' /etc/hosts
+echo "127.0.1.1      $HOST" >> /etc/hosts
 
 if grep -Fxq "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
 then
@@ -224,6 +226,31 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
   update-rc.d domoticz.sh defaults
   systemctl start domoticz
 fi
+
+
+##-----------------##
+#   Optimizing Pi   #
+##-----------------##
+
+echo "" >> /boot/config.txt
+echo "#Reduce allocated GPU Memory since we're running headless" >> /boot/config.txt
+echo "gpu_mem=16" >> /boot/config.txt
+
+echo "" >> /etc/fstab
+echo "#Mounting /tmp folder to RAM so it reduces SD Card wear" >> /etc/fstab
+echo "tmpfs /tmp tmpfs defaults,noatime,nosuid 0 0" >> /etc/fstab
+
+curl -L https://github.com/azlux/log2ram/archive/master.tar.gz -o /tmp/log2ram.tar.gz
+tar zxfv /tmp/log2ram.tar.gz -C /tmp/
+cd /tmp/log2ram-master/
+chmod +x install.sh && sudo install.sh
+cd ~
+sed -i -e 's/SIZE=128M/SIZE=256M/g' /etc/log2ram.conf
+sed -i -e 's/MAIL=true/MAIL=false/g' /etc/log2ram.conf
+journalctl --vacuum-size=32M
+systemctl restart systemd-journald
+
+sed -i -e 's/# CPU_DEFAULT_GOVERNOR="ondemand"/CPU_DEFAULT_GOVERNOR="conservative"/g' /etc/default/cpu_governor
 
 
 ##--------------##
