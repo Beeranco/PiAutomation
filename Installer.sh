@@ -28,7 +28,7 @@ if [[ $dist != debian ]]; then
 fi
 
 
-if [[ $dist != 11 ]]; then
+if [[ $dist_ver != 11 ]]; then
   if (whiptail --title "Warning" --yesno "This script is tested on Debian 11, use it on your own risk. \nYou're currently running Debian $dist_ver! \n\nContinue anyway?" 10 78); then
     echo ""
   else
