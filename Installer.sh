@@ -4,14 +4,28 @@
 #   Static Vars   #
 ##---------------##
 
-OUTPUT='>/dev/null 2>&1'
+OUTPUT='/dev/null'
 APTMODE="debconf-apt-progress -- apt"
-DATE=$(date +"%m-%d-%Y")
+PKGM="$APTMODE"
+PKGUD="$PKGM update"
+PKGUP="$PKGM upgrade -y"
+PKGI="${PKGM} install -y"
+PKRM="$PKGM remove --purge -y"
+PKARM="$PKGM autoremove -y"
+DATE=$(date "+%d-%m-%Y")
 IP=`hostname -I`
 IP=$(echo $IP | tr -d ' ')
 REPO=PiAutomation
 GIT=https://raw.githubusercontent.com/Beeranco
 BRANCH=main
+
+
+##---------------##
+#   Dependencies  #
+##---------------##
+
+$PKGI curl wget whiptail
+
 
 ##-----------##
 #   Check OS  #
@@ -152,12 +166,12 @@ fi
 #   Updater   #
 ##-----------##
 
-apt update
-apt remove --purge manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy* -y
+$PKGUD
+$PKRM manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
 apt list --upgradeable 2>/dev/null | cut -d/ -f1 | grep -v Listing >> /tmp/install.list
 echo "unattended-upgrades" /tmp/install.list
-xargs < /tmp/install.list apt-get install -y
-apt autoremove -y
+xargs < /tmp/install.list xargs $PKGI
+$PKARM
 
 
 ##-------------##
