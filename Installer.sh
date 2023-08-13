@@ -122,6 +122,8 @@ else
     timedatectl set-timezone Europe/Amsterdam
 fi
 
+rm /etc/motd
+rm /etc/update-motd.d/10-uname
 
 sed -i -e 's/dtoverlay=vc4-kms-v3d/dtoverlay=vc4-fkms-v3d/g' /boot/config.txt
 echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/01Recommends
