@@ -26,8 +26,8 @@ KERNEL=`uname -r`
 ##------------##
 
 systemctl is-active --quiet log2ram.service && L2R=Online || L2R=Offline
-systemctl is-active --quiet domoticz.service && DomoStat=Online || DomoStat=Offline
-systemctl is-active --quiet nodered.service && NodeStat=Online || NodeStat=Offline
+systemctl is-active --quiet domoticz.service && Domo=Online || DomoStat=Offline
+systemctl is-active --quiet nodered.service && Node=Online || NodeStat=Offline
 systemctl is-active --quiet zigbee2mqtt.service && ZB2M=Online || ZB2M=Offline
 systemctl is-active --quiet mosquitto.service && MQTT=Online || MQTT=Offline
 
@@ -45,20 +45,18 @@ echo "RAM usage: $MEMstat"
 echo "Kernel $KERNEL"
 
 echo ""
-
 echo "Services:"
 if [[ $L2R == Online ]]; then
   echo -e "Log2Ram is: ${GREEN}online${RESET}"
   else
   echo -e "Log2Ram is: ${RED}offline${RESET}"
 fi
-
-if [[ $DomoStat == Online ]]; then
+if [[ $Domo == Online ]]; then
   echo -e "Domoticz is: ${GREEN}online${RESET}"
   else
   echo -e "Domoticz is: ${RED}offline${RESET}"
 fi
-if [[ $NodeStat == Online ]]; then
+if [[ $Node == Online ]]; then
   echo -e "Node-RED is: ${GREEN}online${RESET}"
   else
   echo -e "Node-RED is: ${RED}offline${RESET}"
@@ -72,6 +70,21 @@ if [[ $MQTT == Online ]]; then
   echo -e "MQTT broker is: ${GREEN}online${RESET}"
   else
   echo -e "MQTT broker is: ${RED}offline${RESET}"
+fi
+
+echo ""
+echo "Available ports:"
+if [[ $DomoStat == Online ]]; then
+  echo "Domoticz is available on port: 8080"
+fi
+if [[ $NodeStat == Online ]]; then
+  echo "Node-RED is available on port: 1880"
+fi
+if [[ $ZB2M == Online ]]; then
+  echo "Zigbee2MQTT is available on port: 5002"
+fi
+if [[ $MQTT == Online ]]; then
+  echo "MQTT broker is listening on port: 1883"
 fi
 
 #Set CPU and RAM stat here cause it takes a sec to load
