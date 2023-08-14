@@ -2,10 +2,14 @@
 
 ## Setup the SD card:
 ```
+Insert your SD card
+
 Download the Raspberry Pi Imager:
 https://downloads.raspberrypi.org/imager/imager_1.7.5.exe
 
-After running the Raspberry Pi Imager press: CHOOSE OS
+After running the Raspberry Pi Imager press:
+
+CHOOSE OS
 Select: Raspberry Pi OS (other), Raspberry Pi OS Lite (64-bit)
 
 CHOOSE STORAGE:
@@ -39,23 +43,25 @@ Otherwise read the section: Enabling wireless LAN
 
 ## Enabling wireless LAN:
 ```
+Close the Raspberry Pi Imager.
+
 Open a text editor on your system and paste the following:
 country=NL
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 network={
     ssid="YOURWIFINAME"
-    psk="YOURWIFIPASSWORD!"
+    psk="YOURWIFIPASSWORD"
     key_mgmt=WPA-PSK
 }
 
 Change ssid= and psk= to your wireless LAN name and password.
 
-Safe the file as wpa_supplicant.conf to the SD card labeled "boot" in your explorer.
+Save the file as wpa_supplicant.conf to the SD card labeled "bootfs" in your explorer.
 Be aware to make sure there is no .txt extension in the filename!
 
 You can now eject the SD card, setup your Pi and boot from the SD card.
 Remember: you MUST use a LAN cable for the initial setup!!!
-After running the installer you can disconnect the LAN cable!!!
+After running the installer in the last section of this readme you can disconnect the LAN cable!!!
 
 ```  
 
