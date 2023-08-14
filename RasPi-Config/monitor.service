@@ -1,0 +1,80 @@
+##--------------##
+#   Start loop   #
+##--------------##
+
+clear
+
+while :
+do
+
+
+##---------------##
+#   Static Vars   #
+##---------------##
+
+clear
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+RESET='\033[0m'
+IP=`hostname -I`
+DATE=`date "+%d-%m-%y %H:%M"`
+KERNEL=`uname -r`
+
+
+##------------##
+#   Services   #
+##------------##
+
+systemctl is-active --quiet domoticz.service && DomoStat=Online || DomoStat=Offline
+systemctl is-active --quiet nodered.service && NodeStat=Online || NodeStat=Offline
+systemctl is-active --quiet zigbee2mqtt.service && ZB2M=Online || ZB2M=Offline
+systemctl is-active --quiet mosquitto.service && MQTT=Online || MQTT=Offline
+
+
+##----------------##
+#   Display Info   #
+##----------------##
+
+echo $DATE
+echo ""
+echo "OS status:"
+echo "My IP is: $IP"
+echo "CPU usage: $CPUstat"
+echo "RAM usage: $MEMstat"
+echo "Kernel $KERNEL"
+
+echo ""
+echo "Services:"
+if [[ $DomoStat == Online ]]; then
+  echo -e "Domoticz is: ${GREEN}online${RESET}"
+  else
+  echo -e "Domoticz is: ${RED}offline${RESET}"
+fi
+if [[ $NodeStat == Online ]]; then
+  echo -e "Node-RED is: ${GREEN}online${RESET}"
+  else
+  echo -e "Node-RED is: ${RED}offline${RESET}"
+fi
+if [[ $ZB2M == Online ]]; then
+  echo -e "Zigbee2MQTT is: ${GREEN}online${RESET}"
+  else
+  echo -e "Zigbee2MQTT is: ${RED}offline${RESET}"
+fi
+if [[ $MQTT == Online ]]; then
+  echo -e "MQTT broker is: ${GREEN}online${RESET}"
+  else
+  echo -e "MQTT broker is: ${RED}offline${RESET}"
+fi
+
+#Set CPU and RAM stat here cause it takes a sec to load
+#If placed under Static Vars the screen reloads slower
+CPUstat=`(top -bn1 | awk '/Cpu/ { print $2"%"}')`
+MEMstat=`(free -m | awk '/Mem/{print $3"MB"}')`
+
+
+##----------------##
+#   Restart loop   #
+##----------------##
+
+sleep 30
+done
