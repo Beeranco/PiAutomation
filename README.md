@@ -88,7 +88,7 @@ Run the following command:
 sudo systemctl restart sshd
 
 Run the following command:
-sudo password
+sudo passwd
 
 Enter your password twice and type: exit
 You will be logged out of your session as the Pi user.
