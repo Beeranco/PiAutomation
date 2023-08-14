@@ -25,6 +25,7 @@ KERNEL=`uname -r`
 #   Services   #
 ##------------##
 
+systemctl is-active --quiet log2ram.service && L2R=Online || L2R=Offline
 systemctl is-active --quiet domoticz.service && DomoStat=Online || DomoStat=Offline
 systemctl is-active --quiet nodered.service && NodeStat=Online || NodeStat=Offline
 systemctl is-active --quiet zigbee2mqtt.service && ZB2M=Online || ZB2M=Offline
@@ -44,7 +45,14 @@ echo "RAM usage: $MEMstat"
 echo "Kernel $KERNEL"
 
 echo ""
+
 echo "Services:"
+if [[ $L2R == Online ]]; then
+  echo -e "Log2Ram is: ${GREEN}online${RESET}"
+  else
+  echo -e "Log2Ram is: ${RED}offline${RESET}"
+fi
+
 if [[ $DomoStat == Online ]]; then
   echo -e "Domoticz is: ${GREEN}online${RESET}"
   else
@@ -76,5 +84,5 @@ MEMstat=`(free -m | awk '/Mem/{print $3"MB"}')`
 #   Restart loop   #
 ##----------------##
 
-sleep 30
+sleep 15
 done
