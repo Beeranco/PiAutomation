@@ -134,7 +134,7 @@ if [[ $OPTIONS == *"Monitor-Service"* ]]; then
   wget $GIT/$REPO/$BRANCH/RasPi-Config/monitor.service -O /etc/monitor.service
   echo "" >> /home/pi/.profile
   echo "# show Monitor on autologon" >> /home/pi/.profile
-  echo "sudo bash /etc/monitor.service" >> /home/pi/.profile
+  echo "sudo bash /etc/monitor.service 2>/dev/null" >> /home/pi/.profile
   systemctl daemon-reload
   systemctl restart getty@tty1.service
 fi
