@@ -13,8 +13,6 @@ PKGI="${PKGM} install -y"
 PKRM="$PKGM remove --purge -y"
 PKARM="$PKGM autoremove -y"
 DATE=$(date "+%d-%m-%Y")
-IP=`hostname -I`
-IP=$(echo $IP | tr -d ' ')
 REPO=PiAutomation
 GIT=https://raw.githubusercontent.com/Beeranco
 BRANCH=main
@@ -110,8 +108,10 @@ echo "127.0.1.1      $HOST" >> /etc/hosts
 
 if grep -q "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
 then
+  IP=`hostname -I` && IP=$(echo $IP | cut -d' ' -f2,3)
   rfkill unblock wifi
 else
+  IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
   echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
   rfkill unblock wifi
 fi
