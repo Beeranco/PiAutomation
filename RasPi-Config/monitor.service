@@ -1,33 +1,29 @@
+##---------------##
+#   Static-Vars   #
+##---------------##
+
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+RESET='\033[0m'
+KERNEL=`uname -r`
+
+
 ##--------------##
 #   Start loop   #
 ##--------------##
 
-clear
-
 while :
 do
-
-
-##---------------##
-#   Static Vars   #
-##---------------##
-
 clear
-GREEN='\033[1;32m'
-RED='\033[1;31m'
-RESET='\033[0m'
-IP=`hostname -I`
-DATE=`date "+%d-%m-%y %H:%M"`
-KERNEL=`uname -r`
-UFW=`ufw status`
+
 
 ##------------##
 #   Services   #
 ##------------##
 
 systemctl is-active --quiet log2ram.service && L2R=Online || L2R=Offline
-systemctl is-active --quiet domoticz.service && Domo=Online || DomoStat=Offline
-systemctl is-active --quiet nodered.service && Node=Online || NodeStat=Offline
+systemctl is-active --quiet domoticz.service && Domo=Online || Domo=Offline
+systemctl is-active --quiet nodered.service && Node=Online || Node=Offline
 systemctl is-active --quiet zigbee2mqtt.service && ZB2M=Online || ZB2M=Offline
 systemctl is-active --quiet mosquitto.service && MQTT=Online || MQTT=Offline
 
@@ -36,16 +32,22 @@ systemctl is-active --quiet mosquitto.service && MQTT=Online || MQTT=Offline
 #   Display Info   #
 ##----------------##
 
-echo $DATE
-echo ""
+if [[ ! -z "$DATE" ]] ; then
+  echo $DATE
+  echo ""
+fi
 echo "OS status:"
-echo "My IP is: $IP"
+if [[ -z "$IP" ]] ; then
+  echo -e "My IP is: ${RED}unavailable${RESET}"
+  else
+  echo "My IP is: $IP"
+fi
 echo "CPU usage: $CPUstat"
 echo "RAM usage: $MEMstat"
-if [[ $UFW != *in* ]]; then
-  echo -e "Firewall: ${GREEN}active${RESET}"
-  else
+if [[ $UFW == *in* ]] || [[ -z "$UFW" ]] ; then
   echo -e "Firewall: ${RED}inactive${RESET}"
+  else
+  echo -e "Firewall: ${GREEN}active${RESET}"
 fi
 echo "Kernel $KERNEL"
 
@@ -77,25 +79,33 @@ if [[ $MQTT == Online ]]; then
   echo -e "MQTT broker is: ${RED}offline${RESET}"
 fi
 
+if [[ ! -z "$IP" ]] ; then
 echo ""
 echo "Available ports:"
-if [[ $Domo == Online ]]; then
-  echo "Domoticz is available on port: 8080"
-fi
-if [[ $Node == Online ]]; then
-  echo "Node-RED is available on port: 1880"
-fi
-if [[ $ZB2M == Online ]]; then
-  echo "Zigbee2MQTT is available on port: 5002"
-fi
-if [[ $MQTT == Online ]]; then
-  echo "MQTT broker is listening on port: 1883"
+  if [[ $Domo == Online ]]; then
+    echo "Domoticz is available on port: 8080"
+  fi
+  if [[ $Node == Online ]]; then
+    echo "Node-RED is available on port: 1880"
+  fi
+  if [[ $ZB2M == Online ]]; then
+    echo "Zigbee2MQTT is available on port: 5002"
+  fi
+  if [[ $MQTT == Online ]]; then
+    echo "MQTT broker is listening on port: 1883"
+  fi
 fi
 
-#Set CPU and RAM stat here cause it takes a sec to load
-#If placed under Static Vars the screen reloads slower
+
+##-------------##
+#   Variables   #
+##-------------##
+
+IP=`hostname -I`
+DATE=`date "+%d-%m-%y %H:%M"`
 CPUstat=`(top -bn1 | awk '/Cpu/ { print $2"%"}')`
 MEMstat=`(free -m | awk '/Mem/{print $3"MB"}')`
+UFW=`ufw status`
 
 
 ##----------------##
