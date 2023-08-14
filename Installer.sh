@@ -40,8 +40,6 @@ if [[ $dist != debian ]]; then
   clear
   exit
 fi
-
-
 if [[ $dist_ver != 11 ]]; then
   if (whiptail --title "Warning" --yesno "This script is tested on Debian 11, use it on your own risk. \nYou're currently running Debian $dist_ver! \n\nContinue anyway?" 10 78); then
     echo ""
@@ -61,7 +59,6 @@ if (whiptail --title "Pi Automation" --yesno "This installer will turn your Rasp
 else
   INSTALL=no
 fi
-
 if [[ $INSTALL == no ]]; then
   whiptail --title "Pi Automation" --msgbox "Installation canceled!" 8 78
   clear
@@ -100,9 +97,9 @@ OPTIONS=$(whiptail --title "Configure Options" --checklist \
 "Monitor-Service" "Autologin the Pi user and show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
 
 
-##---------------##
-#   Configuring   #
-##---------------##
+##-------------------##
+#   Pre-Configuring   #
+##-------------------##
 
 TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Raspberry Pi" 8 78
 sleep 3
@@ -137,7 +134,7 @@ if [[ $OPTIONS == *"Monitor-Service"* ]]; then
   wget $GIT/$REPO/$BRANCH/RasPi-Config/monitor.service -O /etc/monitor.service
   echo "" >> /home/pi/.profile
   echo "# show Monitor on autologon" >> /home/pi/.profile
-  echo "bash /etc/monitor.service" >> /home/pi/.profile
+  echo "sudo bash /etc/monitor.service" >> /home/pi/.profile
   systemctl daemon-reload
   systemctl restart getty@tty1.service
 fi
@@ -184,7 +181,7 @@ fi
 $PKGUD
 $PKRM manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
 apt list --upgradeable 2>/dev/null | cut -d/ -f1 | grep -v Listing >> /tmp/install.list
-echo "unattended-upgrades" /tmp/install.list
+echo "unattended-upgrades ufw" /tmp/install.list
 xargs < /tmp/install.list xargs $PKGI
 $PKARM
 
@@ -204,7 +201,6 @@ if [[ $OPTIONS == *"Node-RED"* ]]; then
   cd ~
   wget $GIT/$REPO/$BRANCH/Node-RED/NodeRED.conf -O /root/.node-red/settings.js
 fi
-
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   mkdir -p /opt/zigbee2mqtt/
   git clone --depth 1 https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
@@ -218,13 +214,11 @@ if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   systemctl daemon-reload
   systemctl enable zigbee2mqtt
 fi
-
 if [[ $OPTIONS == *"Unattended-Upgrades"* ]]; then
   systemctl stop unattended-upgrades
   wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
   wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
 fi
-
 if [[ $OPTIONS == *"Domoticz"* ]]; then
   mkdir -p /etc/domoticz/
   wget $GIT/$REPO/$BRANCH/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
@@ -237,6 +231,31 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
   update-rc.d domoticz.sh defaults
   systemctl start domoticz
 fi
+
+
+##---------------##
+#   Configuring   #
+##---------------##
+
+echo "" >> /etc/sysctl.conf
+echo "#Disable IPv6" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
+
+sed -i 's/IPV6=yes/IPV6=no/g' /etc/default/ufw
+
+ufw default deny incoming
+ufw default allow outgoing
+
+ufw allow 1880/tcp
+ufw allow 1880/udp
+ufw allow 1883/tcp
+ufw allow 1883/udp
+ufw allow 8080/tcp
+ufw limit 22/tcp
+
+echo "y" | ufw enable
 
 
 ##-----------------##
@@ -274,6 +293,7 @@ echo $OPTIONS > /etc/installedmodules
 sed -i 's/\s\+/\n/g' /etc/installedmodules
 sed -i 's/\"//g' /etc/installedmodules
 
+
 ##-------------##
 #   Finishing   #
 ##-------------##
@@ -281,7 +301,6 @@ sed -i 's/\"//g' /etc/installedmodules
 wget $GIT/$REPO/$BRANCH/Updater.sh -O /opt/updater.sh
 wget $GIT/$REPO/$BRANCH/MOTD/greetings.sh -O /etc/profile.d/greeting.sh
 sed -i -e "s/%name%/$NAME/g" /etc/profile.d/greeting.sh
-
 
 mkdir -p /opt/backups/timestamps/
 echo "Installed on: $DATE" > /opt/backups/timestamps/OS.update
