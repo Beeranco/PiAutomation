@@ -257,6 +257,8 @@ ufw limit 22/tcp
 
 echo "y" | ufw enable
 
+sed -i 's/X11Forwarding yes/X11Forwarding no/g'   /etc/ssh/sshd_config
+
 
 ##-----------------##
 #   Optimizing Pi   #
