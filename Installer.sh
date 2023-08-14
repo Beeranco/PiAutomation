@@ -112,7 +112,7 @@ echo "127.0.1.1      $HOST" >> /etc/hosts
 
 if grep -q "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
 then
-    echo "Wifi properly configured"
+  rfkill unblock wifi
 else
   echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
   rfkill unblock wifi
