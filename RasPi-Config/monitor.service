@@ -74,10 +74,10 @@ fi
 
 echo ""
 echo "Available ports:"
-if [[ $DomoStat == Online ]]; then
+if [[ $Domo == Online ]]; then
   echo "Domoticz is available on port: 8080"
 fi
-if [[ $NodeStat == Online ]]; then
+if [[ $Node == Online ]]; then
   echo "Node-RED is available on port: 1880"
 fi
 if [[ $ZB2M == Online ]]; then
