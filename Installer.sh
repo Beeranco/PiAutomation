@@ -181,7 +181,7 @@ fi
 $PKGUD
 $PKRM manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
 apt list --upgradeable 2>/dev/null | cut -d/ -f1 | grep -v Listing >> /tmp/install.list
-echo "unattended-upgrades ufw" /tmp/install.list
+echo "ufw" >> /tmp/install.list
 xargs < /tmp/install.list xargs $PKGI
 $PKARM
 
