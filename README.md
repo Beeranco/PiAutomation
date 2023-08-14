@@ -81,7 +81,7 @@ ssh pi@YOUR.RASPBERRY.IP.ADDRESS
 Run the following command:
 sudo nano /etc/ssh/sshd_config
 
-Change the line: #PermitRootLogin no to: PermitRootLogin yes
+Change the line: #PermitRootLogin prohibit-password to: PermitRootLogin yes
 Save and exit (ctrl+o & ctrl+x)
 
 Run the following command:
