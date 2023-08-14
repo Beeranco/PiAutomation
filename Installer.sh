@@ -134,7 +134,7 @@ echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/01Suggests.
 
 if [[ $OPTIONS == *"Monitor-Service"* ]]; then
   wget $GIT/$REPO/$BRANCH/RasPi-Config/autologin -O /etc/systemd/system/getty@tty1.service.d/autologin.conf
-  wget $GIT/$REPO/$BRANCH/RasPi-Config/monitor.service -O /etc/domoticz/setupVars.conf
+  wget $GIT/$REPO/$BRANCH/RasPi-Config/monitor.service -O /etc/monitor.service
   echo "" >> /home/pi/.profile
   echo "# show Monitor on autologon" >> /home/pi/.profile
   echo "bash /etc/monitor.service" >> /home/pi/.profile
