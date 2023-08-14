@@ -91,12 +91,13 @@ fi
 ##-----------##
 
 OPTIONS=$(whiptail --title "Configure Options" --checklist \
-"What to install?" 10 105 5 \
+"What to install?" 12 113 6 \
 "Domoticz" "Is a Home Automation System." ON \
 "Node-RED" "Is a programming tool wiring hardware devices together." OFF \
 "Zigbee2MQTT" "Supports various Zigbee adapters and a big bunch of devices." OFF \
 "MQTT-Broker" "Is a intermediary entity that enables MQTT clients to communicate." ON \
-"Unattended-Upgrades" "Is a system package that automaticly downloads security updates." ON 3>&1 1>&2 2>&3)
+"Unattended-Upgrades" "Is a system package that automaticly downloads security updates." ON \
+"Monitor-Service" "Autologin the Pi user and show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
 
 
 ##---------------##
@@ -130,6 +131,16 @@ rm /etc/update-motd.d/10-uname
 sed -i -e 's/dtoverlay=vc4-kms-v3d/dtoverlay=vc4-fkms-v3d/g' /boot/config.txt
 echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/01Recommends
 echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/01Suggests.
+
+if [[ $OPTIONS == *"Monitor-Service"* ]]; then
+  wget $GIT/$REPO/$BRANCH/RasPi-Config/autologin -O /etc/systemd/system/getty@tty1.service.d/autologin.conf
+  wget $GIT/$REPO/$BRANCH/RasPi-Config/monitor.service -O /etc/domoticz/setupVars.conf
+  echo "" >> /home/pi/.profile
+  echo "# show Monitor on autologon" >> /home/pi/.profile
+  echo "bash /etc/monitor.service" >> /home/pi/.profile
+  systemctl daemon-reload
+  systemctl restart getty@tty1.service
+fi
 
 
 ##-----------------##
