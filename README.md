@@ -54,6 +54,8 @@ Safe the file as wpa_supplicant.conf to the SD card labeled "boot" in your explo
 Be aware to make sure there is no .txt extension in the filename!
 
 You can now eject the SD card, setup your Pi and boot from the SD card.
+Remember: you MUST use a LAN cable for the initial setup!!!
+After running the installer you can disconnect the LAN cable!!!
 
 ```  
 
