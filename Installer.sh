@@ -110,7 +110,7 @@ hostnamectl set-hostname $HOST
 sed -i '/raspberrypi/d' /etc/hosts
 echo "127.0.1.1      $HOST" >> /etc/hosts
 
-if grep -Fxq "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
+if grep -q "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
 then
     echo "Wifi properly configured"
 else
