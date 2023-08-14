@@ -249,6 +249,7 @@ sed -i -e 's/SIZE=128M/SIZE=256M/g' /etc/log2ram.conf
 sed -i -e 's/MAIL=true/MAIL=false/g' /etc/log2ram.conf
 journalctl --vacuum-size=32M
 systemctl restart systemd-journald
+rm -rf /var/log/*
 
 sed -i -e 's/# CPU_DEFAULT_GOVERNOR="ondemand"/CPU_DEFAULT_GOVERNOR="conservative"/g' /etc/default/cpu_governor
 
