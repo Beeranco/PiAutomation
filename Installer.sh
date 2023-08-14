@@ -149,7 +149,7 @@ fi
 
 (ls /dev/ttyACM0 >> /dev/null 2>&1) && USB=yes || USB=no
 if [[ $USB == *"yes"* ]]; then
-  whiptail --title "Error!" --msgbox "Remove the Zigbee USB first! Then you must hit OK to continue." 8 78
+  whiptail --title "Error!" --msgbox "Remove the Zigbee Dongle first! After removal press OK to continue." 8 78
 fi
 
 TERM=ansi whiptail --title "Pi Automation" --infobox "Setup will begin with running updates and installing dependencies\nthis may take a while... Grab yourself a coffee!" 8 78
@@ -299,5 +299,13 @@ if grep -q Zigbee2MQTT "/etc/installedmodules"; then
   whiptail --title "Remember" --msgbox "After a reboot Zigbee2MQTT is accessible on:\nhttp://$IP:5002" 8 78
 fi
 
-whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Hit OK to continue." 8 78
-reboot
+whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
+
+if grep -q "ssid=" /etc/wpa_supplicant/wpa_supplicant.conf
+then
+  whiptail --title "Done!" --msgbox "The Raspberry Pi will shutdown,\nplease remove the LAN cable before starting up again.\n\nPress OK to continue." 10 78
+  shutdown now
+else
+  whiptail --title "Done!" --msgbox "The Raspberry Pi will reboot. Press OK to continue." 8 78
+  reboot
+fi
