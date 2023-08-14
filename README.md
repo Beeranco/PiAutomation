@@ -43,6 +43,11 @@ Otherwise read the section: Enabling wireless LAN
 
 ## Enabling wireless LAN:
 ```
+IMPORTANT! If you're planning to use 5GHz wireless LAN do NOT use the HDMI-1 port.
+This can cause bad interference with the wireless radio due to HDMI signals at certain screen resolutions.
+Use the HDMI-0 port (the port closest to the power/USB-C connection).
+When using 2.4GHz wireless LAN this is not an issue and you can choose wich HDMI port to use.
+
 Close the Raspberry Pi Imager.
 
 Open a text editor on your system and paste the following:
@@ -60,6 +65,7 @@ Save the file as wpa_supplicant.conf to the SD card labeled "bootfs" in your exp
 Be aware to make sure there is no .txt extension in the filename!
 
 You can now eject the SD card, setup your Pi and boot from the SD card.
+
 Remember: you MUST use a LAN cable for the initial setup!!!
 After running the installer in the last section of this readme you can disconnect the LAN cable!!!
 
