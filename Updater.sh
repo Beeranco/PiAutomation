@@ -68,13 +68,6 @@ if [[ ! $(find "$osChk" -newermt "336 hours ago") ]]; then
   osUpd=false
 fi
 
-echo "Testing output"
-echo Domoticz $DomoUpd
-echo NodeRed $NodeUpd
-echo Zigbee $ZB2mUpd
-echo Debian $osUpd
-echo ""
-
 
 ##-----------##
 #   Updater   #
