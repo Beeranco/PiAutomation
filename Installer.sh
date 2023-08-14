@@ -243,7 +243,7 @@ echo "tmpfs /tmp tmpfs defaults,noatime,nosuid 0 0" >> /etc/fstab
 curl -L https://github.com/azlux/log2ram/archive/master.tar.gz -o /tmp/log2ram.tar.gz
 tar zxfv /tmp/log2ram.tar.gz -C /tmp/
 cd /tmp/log2ram-master/
-chmod +x install.sh && sudo install.sh
+chmod +x install.sh && sudo ./install.sh
 cd ~
 sed -i -e 's/SIZE=128M/SIZE=256M/g' /etc/log2ram.conf
 sed -i -e 's/MAIL=true/MAIL=false/g' /etc/log2ram.conf
