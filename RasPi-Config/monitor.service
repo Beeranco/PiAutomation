@@ -19,7 +19,7 @@ RESET='\033[0m'
 IP=`hostname -I`
 DATE=`date "+%d-%m-%y %H:%M"`
 KERNEL=`uname -r`
-
+UFW=`ufw status`
 
 ##------------##
 #   Services   #
@@ -42,6 +42,11 @@ echo "OS status:"
 echo "My IP is: $IP"
 echo "CPU usage: $CPUstat"
 echo "RAM usage: $MEMstat"
+if [[ $UFW != *in* ]]; then
+  echo -e "Firewall: ${GREEN}active${RESET}"
+  else
+  echo -e "Firewall: ${RED}inactive${RESET}"
+fi
 echo "Kernel $KERNEL"
 
 echo ""
