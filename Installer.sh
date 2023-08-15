@@ -25,6 +25,13 @@ BRANCH=main
 $PKGI curl wget whiptail
 
 
+##----------------------------##
+#   Check if Pi is compatible  #
+##----------------------------##
+
+wget $GIT/$REPO/$BRANCH/RasPi-Config/Requirements.sh -O /tmp/Requirements.sh
+source /tmp/Requirements.sh
+
 ##-----------##
 #   Check OS  #
 ##-----------##
@@ -268,22 +275,32 @@ echo "" >> /boot/config.txt
 echo "#Reduce allocated GPU Memory since we're running headless" >> /boot/config.txt
 echo "gpu_mem=16" >> /boot/config.txt
 
-echo "" >> /etc/fstab
-echo "#Mounting /tmp folder to RAM so it reduces SD Card wear" >> /etc/fstab
-echo "tmpfs /tmp tmpfs defaults,noatime,nosuid 0 0" >> /etc/fstab
+if [[ $PI4 == "yes" ]] && [[ $UNSAFE == "no" ]]; then
+  echo "" >> /etc/fstab
+  echo "#Mounting /tmp folder to RAM so it reduces SD Card wear" >> /etc/fstab
+  echo "tmpfs /tmp tmpfs defaults,noatime,nosuid 0 0" >> /etc/fstab
+fi
 
 curl -L https://github.com/azlux/log2ram/archive/master.tar.gz -o /tmp/log2ram.tar.gz
 tar zxfv /tmp/log2ram.tar.gz -C /tmp/
 cd /tmp/log2ram-master/
 chmod +x install.sh && sudo ./install.sh
 cd ~
-sed -i -e 's/SIZE=128M/SIZE=256M/g' /etc/log2ram.conf
+
+if [[ $UNSAFE == "no" ]]; then
+  sed -i -e 's/SIZE=128M/SIZE=256M/g' /etc/log2ram.conf
+fi
+
 sed -i -e 's/MAIL=true/MAIL=false/g' /etc/log2ram.conf
 journalctl --vacuum-size=32M
 systemctl restart systemd-journald
 rm -rf /var/log/*
 
-sed -i -e 's/# CPU_DEFAULT_GOVERNOR="ondemand"/CPU_DEFAULT_GOVERNOR="conservative"/g' /etc/default/cpu_governor
+if [[ $PI4 == "no" ]]; then
+  sed -i -e 's/# CPU_DEFAULT_GOVERNOR="ondemand"/CPU_DEFAULT_GOVERNOR="performance"/g' /etc/default/cpu_governor
+  else
+  sed -i -e 's/# CPU_DEFAULT_GOVERNOR="ondemand"/CPU_DEFAULT_GOVERNOR="conservative"/g' /etc/default/cpu_governor
+fi
 
 
 ##--------------##
