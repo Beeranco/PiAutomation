@@ -40,7 +40,7 @@ if [[ $PiRevision == "a02082" ]] || [[ $PiRevision == "a22082" ]] || [[ $PiRevis
 elif [[ $PiRevision == "a03111" ]]; then
   if (whiptail --title "Warning" --yesno "You're running a $Model,\nthis script is tested for a Raspberry Pi 4 with at least 2GB memory.\n\nIf you continue mounting the /tmp to RAM will be disabled.\n\nContinue anyway?" 12 78); then
     UNSAFE=yes
-    PI4=no
+    PI4=yes
   else
     clear
     exit
