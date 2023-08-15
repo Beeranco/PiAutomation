@@ -223,7 +223,7 @@ LAN cable to connect via SSH and run the script that also enables the wireless r
 ### HDMI-0 or HDMI-1? You really think I what ports are where?! ###
 Quick explanation: HDMI-0, closest to the USB-C / Power port!
 HDMI-1, furthest away from the  USB-C / Power port!
-This does only appy to Pi 4's.
+This does only apply to Pi 4's.
 
 
 
