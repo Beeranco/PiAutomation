@@ -131,6 +131,25 @@ and in the case of a Pi 4 1GB model disable the /tmp folder as RAM mounted
 
 
 
+### Just use any SD card? ###
+The simpel answer is no.
+Definitly do not use cheap Target, Walmart, AliExpress like SD cards!
+
+There are people that will tell you the "best" card in terms of performance,
+that's just part of the story. Speed good, go fast is nice but more important in this use case:
+reliability
+
+The most reliable SD cards tested so far in order are:
+SanDisk Extreme Pro
+SanDisk Extreme
+SanDisk Ultra
+Samsung Evo Plus
+Samsung Evo
+Kingston
+
+
+
+
 ### 1GB of ram not good enough? ###
 It's not the case of not being good enough, the Pi's all suffer from a major flaw:
 the SD card.
