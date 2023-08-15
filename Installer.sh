@@ -118,9 +118,12 @@ if grep -q "ssid=" /etc/wpa_supplicant/wpa_supplicant.conf
     IP=`hostname -I` && IP=$(echo $IP | cut -d' ' -f2,3)
     rfkill unblock wifi
   else
-    IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
     echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
     rfkill unblock wifi
+    systemctl restart wpa_supplicant
+    ip link set wlan0 up
+    sleep 30
+    IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
 fi
 
 if grep -q "Amsterdam" <<< "$TZDATA"; then
@@ -188,7 +191,7 @@ fi
 $PKGUD
 $PKRM manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
 apt list --upgradeable 2>/dev/null | cut -d/ -f1 | grep -v Listing >> /tmp/install.list
-echo "ufw" >> /tmp/install.list
+echo "ufw rsync" >> /tmp/install.list
 xargs < /tmp/install.list xargs $PKGI
 $PKARM
 
