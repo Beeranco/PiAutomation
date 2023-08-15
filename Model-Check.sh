@@ -32,6 +32,7 @@ fi
 if [[ $PiRevision == "a02082" ]] || [[ $PiRevision == "a22082" ]] || [[ $PiRevision == "a020d3" ]]; then
   if (whiptail --title "Warning" --yesno "You're running a $Model,\nthis script is tested for a Raspberry Pi 4 with at least 2GB memory.\n\nThe $Pi can lack the power or resources to run all of the installer options.\nIf you continue mounting the /tmp to RAM will be disabled.\n\nContinue anyway?" 13 83); then
     UNSAFE=yes
+    PI4=no
   else
     clear
     exit
@@ -39,12 +40,14 @@ if [[ $PiRevision == "a02082" ]] || [[ $PiRevision == "a22082" ]] || [[ $PiRevis
 elif [[ $PiRevision == "a03111" ]]; then
   if (whiptail --title "Warning" --yesno "You're running a $Model,\nthis script is tested for a Raspberry Pi 4 with at least 2GB memory.\n\nIf you continue mounting the /tmp to RAM will be disabled.\n\nContinue anyway?" 12 78); then
     UNSAFE=yes
+    PI4=no
   else
     clear
     exit
   fi
 elif [[ $Model != "not supported!" ]]; then
     UNSAFE=no
+    PI4=yes
   else
     whiptail --title "Error" --msgbox "Installation canceled! You're running a model that is not supported!" 8 78
   clear
