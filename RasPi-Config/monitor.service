@@ -101,7 +101,7 @@ fi
 #   Variables   #
 ##-------------##
 
-IP=`hostname -I`
+IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
 DATE=`date "+%d-%m-%y %H:%M"`
 CPUstat=`(top -bn1 | awk '/Cpu/ { print $2"%"}')`
 MEMstat=`(free -m | awk '/Mem/{print $3"MB"}')`
