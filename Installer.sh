@@ -113,19 +113,19 @@ hostnamectl set-hostname $HOST
 sed -i '/raspberrypi/d' /etc/hosts
 echo "127.0.1.1      $HOST" >> /etc/hosts
 
-if grep -q "country=NL" /etc/wpa_supplicant/wpa_supplicant.conf
-then
-  IP=`hostname -I` && IP=$(echo $IP | cut -d' ' -f2,3)
-  rfkill unblock wifi
-else
-  IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
-  echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
-  rfkill unblock wifi
+if grep -q "ssid=" /etc/wpa_supplicant/wpa_supplicant.conf
+  then
+    IP=`hostname -I` && IP=$(echo $IP | cut -d' ' -f2,3)
+    rfkill unblock wifi
+  else
+    IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
+    echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
+    rfkill unblock wifi
 fi
 
 if grep -q "Amsterdam" <<< "$TZDATA"; then
     echo "Timezone properly configured"
-else
+    else
     timedatectl set-timezone Europe/Amsterdam
 fi
 
