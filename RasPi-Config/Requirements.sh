@@ -1,7 +1,7 @@
 PiRevision=`grep "Revision" /proc/cpuinfo` && PiRevision=$(echo $PiRevision | cut -f 2 -d ':' | cut -d' ' -f2,3)
 #Test Variables
 #PiRevision=a02082 #3B
-PiRevision=a020d3 #3B+
+#PiRevision=a020d3 #3B+
 #PiRevision=a03111 #4 1GB
 #PiRevision=c03111 #4 4GB
 #PiRevision=d03114 #4 8GB
