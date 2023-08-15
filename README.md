@@ -1,5 +1,28 @@
 # PiAutomation
 
+## Requirements:
+```
+This script is made for and tested on Raspberry Pi 4's with at least 2GB of RAM.
+The OS used and tested on is: Raspberry Pi OS Lite x64 version 11 / Bullseye.
+An official Raspberry Pi power supply.
+A good SD card with 16GB storage or more (read the FAQ: Just use any SD card?) for more information.
+
+Optional:
+Zigbee Dongle CC2531/CC2652P.
+LAN cable.
+
+Best to worst Pi's to use that are supported by this installer:
+Pi 4 2GB / 4GB / 8GB
+Pi 4 1GB (mounting /tmp to RAM will be disabled)
+Pi 3B+ (may lack the power and/or resources to run all the installer options, also mounting /tmp to RAM will be disabled)
+Pi 3B (may lack the power and/or resources to run all the installer options, also mounting /tmp to RAM will be disabled)
+
+Why more then 1GB of RAM? Read the FAQ: 1GB of RAM not good enough? for more information.
+```  
+
+
+
+
 ## Setup the SD card:
 ```
 Insert your SD card
@@ -46,7 +69,7 @@ Otherwise read the section: Enabling wireless LAN.
 ## Enabling wireless LAN:
 ```
 IMPORTANT!!!
-If you're planning to use 5GHz wireless LAN do NOT use the HDMI-1 port.
+If you're planning to use 5GHz wireless LAN with a Pi 4 do NOT use the HDMI-1 port.
 Read the FAQ section at the end of this manual to learn which port is HDMI-1
 
 Close the Raspberry Pi Imager.
@@ -118,19 +141,6 @@ Hate me already for using Google?, you must be a real Linux user! DuckDuckGo is 
 
 
 
-### Which Pi can I use? ###
-This script is made and tested on a Raspberry Pi 4 2GB model.
-A Pi 4 4GB or Pi 4 8GB would also work!
-
-Older Pi's could experience slowdown and out of memory errors when running all of the
-installer options due to limited resources and RAM logging (RAM logging explained below).
-
-In the future the installer will calculate the total amount of RAM installed
-and in the case of a Pi 4 1GB model disable the /tmp folder as RAM mounted
-
-
-
-
 ### Just use any SD card? ###
 The simpel answer is no.
 Definitly do not use cheap Target, Walmart, AliExpress like SD cards!
@@ -150,7 +160,7 @@ Kingston
 
 
 
-### 1GB of ram not good enough? ###
+### 1GB of RAM not good enough? ###
 It's not the case of not being good enough, the Pi's all suffer from a major flaw:
 the SD card.
 
@@ -213,6 +223,7 @@ LAN cable to connect via SSH and run the script that also enables the wireless r
 ### HDMI-0 or HDMI-1? You really think I what ports are where?! ###
 Quick explanation: HDMI-0, closest to the USB-C / Power port!
 HDMI-1, furthest away from the  USB-C / Power port!
+This does only appy to Pi 4's.
 
 
 
