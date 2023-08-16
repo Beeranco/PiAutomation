@@ -1,5 +1,14 @@
 #!/bin/bash
 
+##-------------##
+#   Test Vars   #
+##-------------##
+
+AGREE=yes
+SKIPinfo=yes
+SKIPoptions=yes
+OPTIONS='"Domoticz" "Node-RED" "Zigbee2MQTT" "MQTT-Broker" "Unattended-Upgrades" "Monitor-Service"'
+
 ##---------------##
 #   Static Vars   #
 ##---------------##
@@ -59,10 +68,12 @@ fi
 #   Menu   #
 ##---------##
 
-if (whiptail --title "Pi Automation" --yesno "This installer will turn your Raspberry Pi into a hub for home automation." 8 78); then
-  INSTALL=yes
-else
-  INSTALL=no
+if [[ $AGREE != "yes" ]]; then
+  if (whiptail --title "Pi Automation" --yesno "This installer will turn your Raspberry Pi into a hub for home automation." 8 78); then
+    INSTALL=yes
+  else
+    INSTALL=no
+  fi
 fi
 if [[ $INSTALL == no ]]; then
   whiptail --title "Pi Automation" --msgbox "Installation canceled!" 8 78
@@ -70,8 +81,14 @@ if [[ $INSTALL == no ]]; then
   exit
 fi
 
+if [[ $SKIPinfo != "yes" ]]; then
 NAME=$(whiptail --nocancel --inputbox "What is your name?" 8 39 John --title "Welcome" 3>&1 1>&2 2>&3)
-HOST=$(whiptail --nocancel --inputbox "What is the name of this machine? (only az-AZ characters are allowd)" 8 39 Raspberry --title "Welcome $NAME!" 3>&1 1>&2 2>&3)
+HOST=$(whiptail --nocancel --inputbox "What is the name of this machine?\n(only az-AZ 0-9 characters are allowed)" 8 43 PiMation --title "Welcome $NAME!" 3>&1 1>&2 2>&3)
+HOST=$(echo $HOST | tr -dc '[:alnum:]\n\r')
+else
+  NAME=Tester
+  HOST=Admin
+fi
 
 ##-------------##
 #   Pre-Check   #
@@ -92,21 +109,22 @@ fi
 #   Options   #
 ##-----------##
 
-OPTIONS=$(whiptail --title "Configure Options" --checklist \
-"What to install?" 12 113 6 \
-"Domoticz" "Is a Home Automation System." ON \
-"Node-RED" "Is a programming tool wiring hardware devices together." OFF \
-"Zigbee2MQTT" "Supports various Zigbee adapters and a big bunch of devices." OFF \
-"MQTT-Broker" "Is a intermediary entity that enables MQTT clients to communicate." ON \
-"Unattended-Upgrades" "Is a system package that automaticly downloads security updates." ON \
-"Monitor-Service" "Autologin the Pi user and show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
-
+if [[ $SKIPinfo != "yes" ]]; then
+  OPTIONS=$(whiptail --title "Configure Options" --checklist \
+  "What to install?" 12 113 6 \
+  "Domoticz" "Is a Home Automation System." ON \
+  "Node-RED" "Is a programming tool wiring hardware devices together." OFF \
+  "Zigbee2MQTT" "Supports various Zigbee adapters and a big bunch of devices." OFF \
+  "MQTT-Broker" "Is a intermediary entity that enables MQTT clients to communicate." ON \
+  "Unattended-Upgrades" "Is a system package that automaticly downloads security updates." ON \
+  "Monitor-Service" "Autologin the Pi user to show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
+fi
 
 ##-------------------##
 #   Pre-Configuring   #
 ##-------------------##
 
-TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Raspberry Pi" 8 78
+TERM=ansi whiptail --title "Pi Automation" --infobox "Preparing the Raspberry Pi." 8 78
 sleep 3
 
 hostnamectl set-hostname $HOST
@@ -114,17 +132,16 @@ sed -i '/raspberrypi/d' /etc/hosts
 echo "127.0.1.1      $HOST" >> /etc/hosts
 
 if grep -q "ssid=" /etc/wpa_supplicant/wpa_supplicant.conf
-  then
-    IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
-    rfkill unblock wifi
+  then {
+  echo 0; sleep 1; rfkill unblock wifi; echo 20;
+  sleep 3; systemctl enable wpa_supplicant &> /dev/null && systemctl restart wpa_supplicant &> /dev/null; echo 40;
+  sleep 3; ip link set wlan0 up; echo 60; while true; do ping -I wlan0 -c1 1.1.1.1 &> /dev/null && break; done; echo 80;
+  sleep 3; echo 100; sleep 1; } | whiptail --title "Pi Automation" --gauge "Configuring wireless LAN. Please wait..." 6 70 0
+  IP=`hostname -I` && IP=$(echo $IP | cut -d' ' -f2,3)
   else
-    echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
-    rfkill unblock wifi
-    systemctl restart wpa_supplicant
-    TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Wireless lan, please wait." 8 78
-    ip link set wlan0 up
-    sleep 30
-	  IP=`hostname -I` && IP=$(echo $IP | cut -d' ' -f2,3)
+  echo "country=NL" >> /etc/wpa_supplicant/wpa_supplicant.conf
+  IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
+  rfkill unblock wifi
 fi
 
 if grep -q "Amsterdam" <<< "$TZDATA"; then
@@ -155,6 +172,9 @@ fi
 #   Pre-Installer   #
 ##-----------------##
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Preparing required packages." 8 78
+sleep 3
+
 (ls /dev/ttyACM0 >> /dev/null 2>&1) && USB=yes || USB=no
 if [[ $USB == *"yes"* ]]; then
   whiptail --title "Error!" --msgbox "Remove the Zigbee Dongle first! After removal press OK to continue." 8 78
@@ -162,7 +182,7 @@ fi
 
 TERM=ansi whiptail --title "Pi Automation" --infobox "Setup will begin with running updates and installing dependencies\nthis may take a while... Grab yourself a coffee!" 8 78
 sleep 3
-dphys-swapfile swapoff ; dphys-swapfile uninstall ; update-rc.d dphys-swapfile remove ; apt purge dphys-swapfile -qq -y
+dphys-swapfile swapoff ; dphys-swapfile uninstall ; update-rc.d dphys-swapfile remove
 systemctl disable ModemManager
 
 echo "python3-dev python3-pip" >> /tmp/install.list
@@ -189,8 +209,11 @@ fi
 #   Updater   #
 ##-----------##
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Updating packages." 8 78
+sleep 3
+
 $PKGUD
-$PKRM manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
+$PKRM dphys-swapfile* manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
 apt list --upgradeable 2>/dev/null | cut -d/ -f1 | grep -v Listing >> /tmp/install.list
 echo "ufw rsync" >> /tmp/install.list
 xargs < /tmp/install.list xargs $PKGI
@@ -201,12 +224,12 @@ $PKARM
 #   Installer   #
 ##-------------##
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Installing packages." 8 78
+sleep 3
+
 if [[ $OPTIONS == *"Node-RED"* ]]; then
   bash <(curl -sL https://raw.githubusercontent.com/node-red/linux-installers/master/deb/update-nodejs-and-nodered) --confirm-root --confirm-install --skip-pi --node18 --no-init 
   systemctl enable nodered
-  ###Test if nodered is not yet autostarted###
-  systemctl status nodered
-
   cd /root/.node-red/
   npm install @node-red-contrib-themes/midnight-red
   cd ~
@@ -233,10 +256,8 @@ fi
 if [[ $OPTIONS == *"Domoticz"* ]]; then
   mkdir -p /etc/domoticz/
   wget $GIT/$REPO/$BRANCH/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
-
   mkdir -p /opt/domoticz/
   bash -c "$(curl -sSfL https://install.domoticz.com)"
-
   wget $GIT/$REPO/$BRANCH/Domoticz/DomoService.conf  -O /etc/init.d/domoticz.sh
   chmod +x /etc/init.d/domoticz.sh
   update-rc.d domoticz.sh defaults
@@ -247,6 +268,9 @@ fi
 ##---------------##
 #   Configuring   #
 ##---------------##
+
+TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring system." 8 78
+sleep 3
 
 echo "" >> /etc/sysctl.conf
 echo "#Disable IPv6" >> /etc/sysctl.conf
@@ -259,21 +283,33 @@ sed -i 's/IPV6=yes/IPV6=no/g' /etc/default/ufw
 ufw default deny incoming
 ufw default allow outgoing
 
-ufw allow 1880/tcp
-ufw allow 1880/udp
-ufw allow 1883/tcp
-ufw allow 1883/udp
-ufw allow 8080/tcp
-ufw limit 22/tcp
+if [[ $OPTIONS == *"Domoticz"* ]]; then
+  ufw allow 8080/tcp
+fi
+if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
+  ufw allow 5002/tcp
+fi
+if [[ $OPTIONS == *"MQTT-Broker"* ]]; then
+  ufw allow 1883/tcp
+  ufw allow 1883/udp
+fi
+if [[ $OPTIONS == *"Node-RED"* ]]; then
+  ufw allow 1880/tcp
+  ufw allow 1880/udp
+fi
 
+ufw limit 22/tcp
 echo "y" | ufw enable
 
-sed -i 's/X11Forwarding yes/X11Forwarding no/g'   /etc/ssh/sshd_config
+#sed -i 's/X11Forwarding yes/X11Forwarding no/g'   /etc/ssh/sshd_config
 
 
 ##-----------------##
 #   Optimizing Pi   #
 ##-----------------##
+
+TERM=ansi whiptail --title "Pi Automation" --infobox "Optimizing Raspberry Pi." 8 78
+sleep 3
 
 echo "" >> /boot/config.txt
 echo "#Reduce allocated GPU Memory since we're running headless" >> /boot/config.txt
@@ -321,6 +357,9 @@ sed -i 's/\"//g' /etc/installedmodules
 #   Finishing   #
 ##-------------##
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "   Finishing." 8 78
+sleep 3
+
 wget $GIT/$REPO/$BRANCH/Updater.sh -O /opt/updater.sh
 wget $GIT/$REPO/$BRANCH/MOTD/greetings.sh -O /etc/profile.d/greeting.sh
 sed -i -e "s/%name%/$NAME/g" /etc/profile.d/greeting.sh
@@ -338,10 +377,9 @@ if grep -q Node-RED "/etc/installedmodules"; then
 fi
 if grep -q Zigbee2MQTT "/etc/installedmodules"; then
   echo "Installed on: $DATE" > /opt/backups/timestamps/Zigbee2MQTT.update
+  whiptail --title "Pi Automation!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
   whiptail --title "Remember" --msgbox "After a reboot Zigbee2MQTT is accessible on:\nhttp://$IP:5002" 8 78
 fi
-
-whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
 
 if grep -q "ssid=" /etc/wpa_supplicant/wpa_supplicant.conf
 then
