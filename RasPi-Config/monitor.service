@@ -1,0 +1,106 @@
+##---------------##
+#   Static-Vars   #
+##---------------##
+
+GREEN='\033[1;32m'
+RED='\033[1;31m'
+RESET='\033[0m'
+KERNEL=`uname -r`
+
+
+##--------------##
+#   Start loop   #
+##--------------##
+
+while :
+do
+clear
+
+
+##------------##
+#   Services   #
+##------------##
+
+systemctl is-active --quiet log2ram.service && L2R=Online || L2R=Offline
+systemctl is-active --quiet domoticz.service && Domo=Online || Domo=Offline
+systemctl is-active --quiet nodered.service && Node=Online || Node=Offline
+systemctl is-active --quiet zigbee2mqtt.service && ZB2M=Online || ZB2M=Offline
+systemctl is-active --quiet mosquitto.service && MQTT=Online || MQTT=Offline
+
+
+##----------------##
+#   Display Info   #
+##----------------##
+
+if [[ ! -z "$DATE" ]] ; then
+  echo $DATE
+  echo ""
+fi
+echo "OS status:"
+if [[ -z "$IP" ]] ; then
+  echo -e "My IP is: ${RED}unavailable${RESET}"
+  else
+  echo "My IP is: $IP"
+fi
+echo "CPU usage: $CPUstat"
+echo "RAM usage: $MEMstat"
+if [[ $UFW == *in* ]] || [[ -z "$UFW" ]] ; then
+  echo -e "Firewall: ${RED}inactive${RESET}"
+  else
+  echo -e "Firewall: ${GREEN}active${RESET}"
+fi
+echo "Kernel $KERNEL"
+
+echo ""
+if [[ ! -z "$IP" ]]; then
+  echo "Services and Ports:"
+  else
+  echo "Services:"
+fi
+if [[ $MQTT == "Online" ]] && [[ ! -z "$IP" ]]; then
+  echo -e "MQTT broker: ${GREEN}online${RESET} @1883"
+    elif [[ $MQTT == "Online" ]]; then
+  echo -e "MQTT broker: ${GREEN}online${RESET}"
+    else
+  echo -e "MQTT broker: ${RED}offline${RESET}"
+fi
+if [[ $Domo == "Online" ]] && [[ ! -z "$IP" ]]; then
+  echo -e "Domoticz broker: ${GREEN}online${RESET} @8080"
+    elif [[ $Domo == "Online" ]]; then
+  echo -e "Domoticz broker: ${GREEN}online${RESET}"
+    else
+  echo -e "Domoticz broker: ${RED}offline${RESET}"
+fi
+if [[ $Node == "Online" ]] && [[ ! -z "$IP" ]]; then
+  echo -e "Node-RED broker: ${GREEN}online${RESET} @1880"
+    elif [[ $Node == "Online" ]]; then
+  echo -e "Node-RED broker: ${GREEN}online${RESET}"
+    else
+  echo -e "Node-RED broker: ${RED}offline${RESET}"
+fi
+if [[ $ZB2M == "Online" ]] && [[ ! -z "$IP" ]]; then
+  echo -e "Zigbee2MQTT broker: ${GREEN}online${RESET} @5002"
+    elif [[ $ZB2M == "Online" ]]; then
+  echo -e "Zigbee2MQTT broker: ${GREEN}online${RESET}"
+    else
+  echo -e "Zigbee2MQTT broker: ${RED}offline${RESET}"
+fi
+
+
+##-------------##
+#   Variables   #
+##-------------##
+
+IP=`hostname -I` && IP=$(echo $IP | cut -d ' ' -f 1)
+DATE=`date "+%d-%m-%y %H:%M"`
+CPUstat=`(top -bn1 | awk '/Cpu/ { print $2"%"}')`
+MEMstat=`(free -m | awk '/Mem/{print $3"MB"}')`
+UFW=`ufw status`
+
+
+##----------------##
+#   Restart loop   #
+##----------------##
+
+sleep 15
+done
