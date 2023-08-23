@@ -111,12 +111,13 @@ fi
 
 if [[ $SKIPinfo != "yes" ]]; then
   OPTIONS=$(whiptail --title "Configure Options" --checklist \
-  "What to install?" 12 113 6 \
+  "What to install?" 12 113 7 \
   "Domoticz" "Is a Home Automation System." ON \
   "Node-RED" "Is a programming tool wiring hardware devices together." OFF \
   "Zigbee2MQTT" "Supports various Zigbee adapters and a big bunch of devices." OFF \
   "MQTT-Broker" "Is a intermediary entity that enables MQTT clients to communicate." ON \
   "Unattended-Upgrades" "Is a system package that automaticly downloads security updates." ON \
+  "Homer" "Is a dashboard with Google and quick links to your installed services." OFF \
   "Monitor-Service" "Autologin the Pi user to show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
 fi
 
@@ -204,6 +205,9 @@ fi
 if [[ $OPTIONS == *"Unattended-Upgrades"* ]]; then
   echo "unattended-upgrades apt-listchanges" >> /tmp/install.list
 fi
+if [[ $OPTIONS == *"Homer"* ]]; then
+  echo "nginx unzip" >> /tmp/install.list
+fi
 
 ##-----------##
 #   Updater   #
@@ -263,7 +267,14 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
   update-rc.d domoticz.sh defaults
   systemctl start domoticz
 fi
-
+if [[ $OPTIONS == *"Homer"* ]]; then
+  rm /etc/nginx/sites/enabled/default
+  wget $GIT/$REPO/$BRANCH/Homer/site.conf -O /etc/nginx/sites-enabled/dashboard
+  wget $GIT/$REPO/$BRANCH/Homer/dashboard.zip -O /tmp/dashboard.zip
+  mkdir -p /var/www/html
+  unzip /tmp/dashboard.zip -d /var/www/html/
+  systemctl enable --now nginx  
+fi
 
 ##---------------##
 #   Configuring   #
@@ -296,6 +307,10 @@ fi
 if [[ $OPTIONS == *"Node-RED"* ]]; then
   ufw allow 1880/tcp
   ufw allow 1880/udp
+fi
+if [[ $OPTIONS == *"Homer"* ]]; then
+  ufw allow 80/tcp
+  ufw allow 80/udp
 fi
 
 ufw limit 22/tcp
