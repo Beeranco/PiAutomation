@@ -6,8 +6,8 @@
 
 AGREE=yes
 SKIPinfo=yes
-SKIPoptions=yes
-OPTIONS='"Domoticz" "Node-RED" "Zigbee2MQTT" "MQTT-Broker" "Unattended-Upgrades" "Monitor-Service"'
+SKIPoptions=no
+#OPTIONS='"Domoticz" "Node-RED" "Zigbee2MQTT" "MQTT-Broker" "Unattended-Upgrades" "Monitor-Service" "Homer"'
 
 ##---------------##
 #   Static Vars   #
@@ -109,7 +109,7 @@ fi
 #   Options   #
 ##-----------##
 
-if [[ $SKIPinfo != "yes" ]]; then
+if [[ $SKIPoptions != "yes" ]]; then
   OPTIONS=$(whiptail --title "Configure Options" --checklist \
   "What to install?" 12 113 7 \
   "Domoticz" "Is a Home Automation System." ON \
@@ -120,6 +120,17 @@ if [[ $SKIPinfo != "yes" ]]; then
   "Homer" "Is a dashboard with Google and quick links to your installed services." OFF \
   "Monitor-Service" "Autologin the Pi user to show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
 fi
+
+if [[ $OPTIONS == *"Homer"* ]]; then
+  ISP=$(whiptail --title "Configure Options" --radiolist \
+  "Who is your ISP?" 12 60 4 \
+  "Ziggo" "Is my internet provider." ON \
+  "KPN" "Is my internet provider." OFF \
+  "T-Mobile" "Is my internet provider." OFF \
+  "Other" "I don't see my provider listed here." OFF 3>&1 1>&2 2>&3)
+  ROUTE=$(ip route show default | awk '/default/ {print $3}')
+fi
+
 
 ##-------------------##
 #   Pre-Configuring   #
@@ -154,7 +165,6 @@ fi
 rm /etc/motd
 rm /etc/update-motd.d/10-uname
 
-#sed -i -e 's/dtoverlay=vc4-kms-v3d/dtoverlay=vc4-fkms-v3d/g' /boot/config.txt
 echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf.d/01Recommends
 echo 'APT::Install-Suggests "false";' >> /etc/apt/apt.conf.d/01Suggests
 
@@ -273,7 +283,7 @@ if [[ $OPTIONS == *"Homer"* ]]; then
   wget $GIT/$REPO/$BRANCH/Homer/dashboard.zip -O /tmp/dashboard.zip
   mkdir -p /var/www/html
   unzip /tmp/dashboard.zip -d /var/www/html/
-  systemctl enable --now nginx  
+  systemctl enable nginx  
 fi
 
 ##---------------##
@@ -316,8 +326,55 @@ fi
 ufw limit 22/tcp
 echo "y" | ufw enable
 
-#sed -i 's/X11Forwarding yes/X11Forwarding no/g'   /etc/ssh/sshd_config
+if [[ $OPTIONS == *"Homer"* ]]; then
+ if [[ ! -z "$ISP" ]]; then
+   echo "" >> /var/www/html/assets/config.yml
+   echo "  - name: "Network"" >> /var/www/html/assets/config.yml
+   echo "    icon: "fa-solid fa-server"" >> /var/www/html/assets/config.yml
+   echo "    items:" >> /var/www/html/assets/config.yml
+   echo "      - name: "PROVIDER Modem"" >> /var/www/html/assets/config.yml
+   ISP=$(echo "$ISP" | tr '[:upper:]' '[:lower:]')
+   echo "        logo: "assets/tools/PROVIDER.png"" >> /var/www/html/assets/config.yml
+   echo "        subtitle: "Network Management"" >> /var/www/html/assets/config.yml
+   echo "        tag: "PROVIDER, network"" >> /var/www/html/assets/config.yml
+   echo "        tagstyle: "is-primary"" >> /var/www/html/assets/config.yml
+   echo "        url: "GATEWAY"" >> /var/www/html/assets/config.yml
+   echo "        target: "_blank"" >> /var/www/html/assets/config.yml
+  fi
+fi
 
+if [[ $OPTIONS == *"Homer"* ]]; then
+  if [[ $OPTIONS == *"Domoticz"* ]] || [[ $OPTIONS == *"Node-RED"* ]]  || [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
+    echo "" >> /var/www/html/assets/config.yml
+    echo "  - name: "Automation"" >> /var/www/html/assets/config.yml
+    echo "    icon: "fa-solid fa-house-signal"" >> /var/www/html/assets/config.yml
+    echo "    items:" >> /var/www/html/assets/config.yml
+    if [[ $OPTIONS == *"Domoticz"* ]]; then
+      echo "      - name: "Domoticz"" >> /var/www/html/assets/config.yml
+      echo "        logo: "assets/tools/domoticz.png"" >> /var/www/html/assets/config.yml
+      echo "        tag: "automation, smarthome, tools"" >> /var/www/html/assets/config.yml
+      echo "        tagstyle: "is-info"" >> /var/www/html/assets/config.yml
+      echo "        url: "http://IP:8080/"" >> /var/www/html/assets/config.yml
+      echo "        target: "_blank"" >> /var/www/html/assets/config.yml
+    fi
+    if [[ $OPTIONS == *"Node-RED"* ]]; then
+      echo "      - name: "NodeRED"" >> /var/www/html/assets/config.yml
+      echo "        logo: "assets/tools/nodered.png"" >> /var/www/html/assets/config.yml
+      echo "        tag: "automation, smarthome, tools"" >> /var/www/html/assets/config.yml
+      echo "        tagstyle: "is-info"" >> /var/www/html/assets/config.yml
+      echo "        url: "http://IP:1880/"" >> /var/www/html/assets/config.yml
+      echo "        target: "_blank"" >> /var/www/html/assets/config.yml
+    fi
+    if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
+      echo "      - name: "Zigbee2MQTT"" >> /var/www/html/assets/config.yml
+      echo "        logo: "assets/tools/zigbee2mqtt.png"" >> /var/www/html/assets/config.yml
+      echo "        tag: "automation, smarthome, tools"" >> /var/www/html/assets/config.yml
+      echo "        tagstyle: "is-info"" >> /var/www/html/assets/config.yml
+      echo "        url: "http://IP:5002/"" >> /var/www/html/assets/config.yml
+      echo "        target: "_blank" " >> /var/www/html/assets/config.yml
+    fi
+  fi
+fi
 
 ##-----------------##
 #   Optimizing Pi   #
@@ -382,18 +439,24 @@ sed -i -e "s/%name%/$NAME/g" /etc/profile.d/greeting.sh
 mkdir -p /opt/backups/timestamps/
 echo "Installed on: $DATE" > /opt/backups/timestamps/OS.update
 
-if grep -q Domoticz "/etc/installedmodules"; then
-  echo "Installed on: $DATE" > /opt/backups/timestamps/Domoticz.update
-  whiptail --title "Remember" --msgbox "After a reboot Domoticz is accessible on:\nhttp://$IP:8080" 8 78
-fi
-if grep -q Node-RED "/etc/installedmodules"; then
-  echo "Installed on: $DATE" > /opt/backups/timestamps/NodeRED.update
-  whiptail --title "Remember" --msgbox "After a reboot Node-RED is accessible on:\nhttp://$IP:1880" 8 78
-fi
-if grep -q Zigbee2MQTT "/etc/installedmodules"; then
-  echo "Installed on: $DATE" > /opt/backups/timestamps/Zigbee2MQTT.update
-  whiptail --title "Pi Automation!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
-  whiptail --title "Remember" --msgbox "After a reboot Zigbee2MQTT is accessible on:\nhttp://$IP:5002" 8 78
+
+
+if [[ $OPTIONS == *"Homer"* ]]; then
+  whiptail --title "Info" --msgbox "After a reboot your dashboard and all configured services are available on:\nhttp://$IP" 8 79
+  else
+  if grep -q Domoticz "/etc/installedmodules"; then
+    echo "Installed on: $DATE" > /opt/backups/timestamps/Domoticz.update
+    whiptail --title "Remember" --msgbox "After a reboot Domoticz is accessible on:\nhttp://$IP:8080" 8 78
+  fi
+  if grep -q Node-RED "/etc/installedmodules"; then
+    echo "Installed on: $DATE" > /opt/backups/timestamps/NodeRED.update
+    whiptail --title "Remember" --msgbox "After a reboot Node-RED is accessible on:\nhttp://$IP:1880" 8 78
+  fi
+  if grep -q Zigbee2MQTT "/etc/installedmodules"; then
+    echo "Installed on: $DATE" > /opt/backups/timestamps/Zigbee2MQTT.update
+    whiptail --title "Pi Automation!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
+    whiptail --title "Remember" --msgbox "After a reboot Zigbee2MQTT is accessible on:\nhttp://$IP:5002" 8 78
+  fi
 fi
 
 if grep -q "ssid=" /etc/wpa_supplicant/wpa_supplicant.conf
