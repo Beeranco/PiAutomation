@@ -7,6 +7,19 @@ RED='\033[1;31m'
 RESET='\033[0m'
 KERNEL=`uname -r`
 
+if grep -q Homer "/etc/installedmodules"; then
+  NGINX=yes
+fi
+if grep -q Domoticz "/etc/installedmodules"; then
+  DOMOTICZ=yes
+fi
+if grep -q Node-RED "/etc/installedmodules"; then
+  NODERED=yes
+fi
+if grep -q Zigbee2MQTT "/etc/installedmodules"; then
+  ZB2MQTT=yes
+fi
+
 
 ##--------------##
 #   Start loop   #
@@ -26,6 +39,7 @@ systemctl is-active --quiet domoticz.service && Domo=Online || Domo=Offline
 systemctl is-active --quiet nodered.service && Node=Online || Node=Offline
 systemctl is-active --quiet zigbee2mqtt.service && ZB2M=Online || ZB2M=Offline
 systemctl is-active --quiet mosquitto.service && MQTT=Online || MQTT=Offline
+systemctl is-active --quiet nginx.service && NGIX=Online || NGIX=Offline
 
 
 ##----------------##
@@ -36,54 +50,70 @@ if [[ ! -z "$DATE" ]] ; then
   echo $DATE
   echo ""
 fi
-echo "OS status:"
+  echo "OS status:"
 if [[ -z "$IP" ]] ; then
   echo -e "My IP is: ${RED}unavailable${RESET}"
   else
   echo "My IP is: $IP"
 fi
-echo "CPU usage: $CPUstat"
-echo "RAM usage: $MEMstat"
+  echo "CPU usage: $CPUstat"
+  echo "RAM usage: $MEMstat"
 if [[ $UFW == *in* ]] || [[ -z "$UFW" ]] ; then
   echo -e "Firewall: ${RED}inactive${RESET}"
   else
   echo -e "Firewall: ${GREEN}active${RESET}"
 fi
-echo "Kernel $KERNEL"
-
-echo ""
+  echo "Kernel $KERNEL"
+  echo ""
 if [[ ! -z "$IP" ]]; then
   echo "Services and Ports:"
   else
   echo "Services:"
 fi
-if [[ $MQTT == "Online" ]] && [[ ! -z "$IP" ]]; then
-  echo -e "MQTT broker: ${GREEN}online${RESET} @1883"
-    elif [[ $MQTT == "Online" ]]; then
-  echo -e "MQTT broker: ${GREEN}online${RESET}"
-    else
-  echo -e "MQTT broker: ${RED}offline${RESET}"
+if [[ $NGINX == "yes" ]]; then
+  if [[ $NGIX == "Online" ]] && [[ ! -z "$IP" ]]; then
+    echo -e "Nginx: ${GREEN}online${RESET} @80"
+      elif [[ $MQTT == "Online" ]]; then
+    echo -e "Nginx: ${GREEN}online${RESET}"
+      else
+    echo -e "Nginx: ${RED}offline${RESET}"
+  fi
 fi
-if [[ $Domo == "Online" ]] && [[ ! -z "$IP" ]]; then
-  echo -e "Domoticz broker: ${GREEN}online${RESET} @8080"
-    elif [[ $Domo == "Online" ]]; then
-  echo -e "Domoticz broker: ${GREEN}online${RESET}"
-    else
-  echo -e "Domoticz broker: ${RED}offline${RESET}"
+if [[ $DOMOTICZ == "yes" ]]; then
+  if [[ $Domo == "Online" ]] && [[ ! -z "$IP" ]]; then
+    echo -e "Domoticz: ${GREEN}online${RESET} @8080"
+      elif [[ $Domo == "Online" ]]; then
+    echo -e "Domoticz: ${GREEN}online${RESET}"
+      else
+    echo -e "Domoticz: ${RED}offline${RESET}"
+  fi
 fi
-if [[ $Node == "Online" ]] && [[ ! -z "$IP" ]]; then
-  echo -e "Node-RED broker: ${GREEN}online${RESET} @1880"
-    elif [[ $Node == "Online" ]]; then
-  echo -e "Node-RED broker: ${GREEN}online${RESET}"
-    else
-  echo -e "Node-RED broker: ${RED}offline${RESET}"
+if [[ $NODERED == "yes" ]] || [[ $ZB2MQTT == "yes" ]]; then
+  if [[ $MQTT == "Online" ]] && [[ ! -z "$IP" ]]; then
+    echo -e "MQTT broker: ${GREEN}online${RESET} @1883"
+      elif [[ $MQTT == "Online" ]]; then
+    echo -e "MQTT broker: ${GREEN}online${RESET}"
+      else
+    echo -e "MQTT broker: ${RED}offline${RESET}"
+  fi
 fi
-if [[ $ZB2M == "Online" ]] && [[ ! -z "$IP" ]]; then
-  echo -e "Zigbee2MQTT broker: ${GREEN}online${RESET} @5002"
-    elif [[ $ZB2M == "Online" ]]; then
-  echo -e "Zigbee2MQTT broker: ${GREEN}online${RESET}"
-    else
-  echo -e "Zigbee2MQTT broker: ${RED}offline${RESET}"
+if [[ $NODERED == "yes" ]]; then
+  if [[ $Node == "Online" ]] && [[ ! -z "$IP" ]]; then
+    echo -e "Node-RED: ${GREEN}online${RESET} @1880"
+      elif [[ $Node == "Online" ]]; then
+    echo -e "Node-RED: ${GREEN}online${RESET}"
+      else
+    echo -e "Node-RED: ${RED}offline${RESET}"
+  fi
+fi
+if [[ $ZB2MQTT == "yes" ]]; then
+  if [[ $ZB2M == "Online" ]] && [[ ! -z "$IP" ]]; then
+    echo -e "Zigbee2MQTT: ${GREEN}online${RESET} @5002"
+      elif [[ $ZB2M == "Online" ]]; then
+    echo -e "Zigbee2MQTT: ${GREEN}online${RESET}"
+      else
+    echo -e "Zigbee2MQTT: ${RED}offline${RESET}"
+  fi
 fi
 
 
@@ -102,5 +132,5 @@ UFW=`ufw status`
 #   Restart loop   #
 ##----------------##
 
-sleep 15
+sleep 30
 done
