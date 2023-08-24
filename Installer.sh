@@ -6,14 +6,15 @@
 
 AGREE=yes
 SKIPinfo=yes
-SKIPoptions=no
-SKIPhomer=no
+SKIPoptions=yes
+SKIPhomer=yes
 
 if [[ $SKIPoptions == "yes" ]]; then
-OPTIONS='"Domoticz" "Node-RED" "Zigbee2MQTT" "MQTT-Broker" "Unattended-Upgrades" "Monitor-Service" "Homer"'
+OPTIONS='"Domoticz" "Zigbee2MQTT" "Unattended-Upgrades" "Monitor-Service" "Homer"'
 fi
 if [[ $SKIPhomer == "yes" ]]; then
 ISP=Ziggo
+isp=$(echo "$ISP" | tr '[:upper:]' '[:lower:]')
 ROUTE=$(ip route show default | awk '/default/ {print $3}')
 fi
 
@@ -30,6 +31,7 @@ PKGI="${PKGM} install -y"
 PKRM="$PKGM remove --purge -y"
 PKARM="$PKGM autoremove -y"
 DATE=$(date "+%d-%m-%Y")
+CORES=`nproc --all`
 REPO=PiAutomation
 GIT=https://raw.githubusercontent.com/Beeranco
 BRANCH=main
@@ -119,11 +121,10 @@ fi
 
 if [[ $SKIPoptions != "yes" ]]; then
   OPTIONS=$(whiptail --title "Configure Options" --checklist \
-  "What to install?" 12 113 7 \
+  "What to install?" 12 113 6 \
   "Domoticz" "Is a Home Automation System." ON \
   "Node-RED" "Is a programming tool wiring hardware devices together." OFF \
   "Zigbee2MQTT" "Supports various Zigbee adapters and a big bunch of devices." OFF \
-  "MQTT-Broker" "Is a intermediary entity that enables MQTT clients to communicate." ON \
   "Unattended-Upgrades" "Is a system package that automaticly downloads security updates." ON \
   "Homer" "Is a dashboard with Google and quick links to your installed services." OFF \
   "Monitor-Service" "Autologin the Pi user to show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
@@ -209,16 +210,14 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
   echo "apt-utils git curl unzip wget sudo cron libudev-dev libsqlite3-0 libcurl4 libusb-0.1-4" >> /tmp/install.list
 fi
 if [[ $OPTIONS == *"Node-RED"* ]]; then
-  echo "build-essential git curl" >> /tmp/install.list
-  else
-  curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-  echo "nodejs" >> /tmp/install.list
+  echo "build-essential git curl mosquitto mosquitto-clients" >> /tmp/install.list
 fi
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
-  echo "git make g++ gcc" >> /tmp/install.list
-fi
-if [[ $OPTIONS == *"MQTT-Broker"* ]]; then
-  echo "mosquitto mosquitto-clients" >> /tmp/install.list
+  echo "git make g++ gcc mosquitto mosquitto-clients" >> /tmp/install.list
+  if [[ $OPTIONS != *"Node-RED"* ]]; then
+    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    echo "nodejs" >> /tmp/install.list
+  fi
 fi
 if [[ $OPTIONS == *"Unattended-Upgrades"* ]]; then
   echo "unattended-upgrades apt-listchanges" >> /tmp/install.list
@@ -235,11 +234,11 @@ TERM=ansi whiptail --title "Pi Automation" --infobox "Updating packages." 8 78
 sleep 3
 
 $PKGUD
-$PKRM dphys-swapfile* manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy*
 apt list --upgradeable 2>/dev/null | cut -d/ -f1 | grep -v Listing >> /tmp/install.list
-echo "ufw rsync" >> /tmp/install.list
+echo "ufw" >> /tmp/install.list
+#Tools required to build and compile rsync 3.2.7.
+echo "gcc g++ gawk autoconf automake python3-cmarkgfm libssl-dev attr libxxhash-dev libattr1-dev liblz4-dev libzstd-dev acl libacl1-dev" >> /tmp/install.list
 xargs < /tmp/install.list xargs $PKGI
-$PKARM
 
 
 ##-------------##
@@ -249,7 +248,21 @@ $PKARM
 TERM=ansi whiptail --title "Pi Automation" --infobox "Installing packages." 8 78
 sleep 3
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Building, compiling and installing rsync 3.2.7." 8 78
+sleep 3
+#Build and compile rsync 3.2.7 to prevent rsync errors.
+#This is a bug in the repository that supplies rsync version 3.2.3.
+wget https://download.samba.org/pub/rsync/src/rsync-3.2.7.tar.gz -O /tmp/rsync-3.2.7.tar.gz
+tar -vxf /tmp/rsync-3.2.7.tar.gz -C /tmp/
+cd /tmp/rsync-3.2.7/
+./configure
+make -j $CORES
+make install
+cd ~
+
 if [[ $OPTIONS == *"Node-RED"* ]]; then
+  TERM=ansi whiptail --title "Pi Automation" --infobox "Installing Node-RED." 8 78
+  sleep 3
   bash <(curl -sL https://raw.githubusercontent.com/node-red/linux-installers/master/deb/update-nodejs-and-nodered) --confirm-root --confirm-install --skip-pi --node18 --no-init 
   systemctl enable nodered
   cd /root/.node-red/
@@ -258,11 +271,14 @@ if [[ $OPTIONS == *"Node-RED"* ]]; then
   wget $GIT/$REPO/$BRANCH/Node-RED/NodeRED.conf -O /root/.node-red/settings.js
 fi
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
+  TERM=ansi whiptail --title "Pi Automation" --infobox "Installing Zigbee2MQTT." 8 78
+  sleep 3
   mkdir -p /opt/zigbee2mqtt/
   git clone --depth 1 https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
   wget $GIT/$REPO/$BRANCH/Zigbee/zb2mqtt.config -O /opt/zigbee2mqtt/data/configuration.yaml
   cd /opt/zigbee2mqtt/
   npm ci /opt/zigbee2mqtt/
+  npm install -g npm@latest
   npm audit fix
   npm start /opt/zigbee2mqtt/
   cd ~
@@ -270,12 +286,21 @@ if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   systemctl daemon-reload
   systemctl enable zigbee2mqtt
 fi
-if [[ $OPTIONS == *"Unattended-Upgrades"* ]]; then
-  systemctl stop unattended-upgrades
-  wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
-  wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
+if [[ $OPTIONS == *"Homer"* ]]; then
+  TERM=ansi whiptail --title "Pi Automation" --infobox "Installing Homer." 8 78
+  sleep 3
+  rm /etc/nginx/sites/enabled/default
+  wget $GIT/$REPO/$BRANCH/Homer/site.conf -O /etc/nginx/sites-enabled/dashboard
+  wget $GIT/$REPO/$BRANCH/Homer/dashboard.zip -O /tmp/dashboard.zip
+  mkdir -p /var/www/html
+  mkdir -p /var/log/nginx/
+  systemctl enable --now nginx
+  rm /etc/nginx/sites-enabled/default
+  systemctl stop nginx
+  unzip /tmp/dashboard.zip -d /var/www/html/
 fi
 if [[ $OPTIONS == *"Domoticz"* ]]; then
+  TERM=ansi whiptail --title "Pi Automation" --msgbox "In the next dialog tell Domoticz to update.\nDo NOT select reconfigure!\n\nPress OK to continue." 10 78
   mkdir -p /etc/domoticz/
   wget $GIT/$REPO/$BRANCH/Domoticz/DomoSetup.conf -O /etc/domoticz/setupVars.conf
   mkdir -p /opt/domoticz/
@@ -285,17 +310,7 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
   update-rc.d domoticz.sh defaults
   systemctl start domoticz
 fi
-if [[ $OPTIONS == *"Homer"* ]]; then
-  rm /etc/nginx/sites/enabled/default
-  wget $GIT/$REPO/$BRANCH/Homer/site.conf -O /etc/nginx/sites-enabled/dashboard
-  wget $GIT/$REPO/$BRANCH/Homer/dashboard.zip -O /tmp/dashboard.zip
-  mkdir -p /var/www/html
-  mkdir -p /var/log/nginx/
-  systemctl enable --now nginx  
-  rm /etc/nginx/sites-enabled/default
-  systemctl stop nginx
-  unzip /tmp/dashboard.zip -d /var/www/html/
-fi
+
 
 ##---------------##
 #   Configuring   #
@@ -304,6 +319,8 @@ fi
 TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring system." 8 78
 sleep 3
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Disabling IPv6." 8 78
+sleep 3
 echo "" >> /etc/sysctl.conf
 echo "#Disable IPv6" >> /etc/sysctl.conf
 echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
@@ -312,6 +329,8 @@ echo "net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf
 
 sed -i 's/IPV6=yes/IPV6=no/g' /etc/default/ufw
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Firewall." 8 78
+sleep 3
 ufw default deny incoming
 ufw default allow outgoing
 
@@ -320,8 +339,6 @@ if [[ $OPTIONS == *"Domoticz"* ]]; then
 fi
 if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
   ufw allow 5002/tcp
-fi
-if [[ $OPTIONS == *"MQTT-Broker"* ]]; then
   ufw allow 1883/tcp
   ufw allow 1883/udp
 fi
@@ -336,6 +353,16 @@ fi
 ufw limit 22/tcp
 echo "y" | ufw enable
 
+if [[ $OPTIONS == *"Unattended-Upgrades"* ]]; then
+  TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Unattended-Upgrades." 8 78
+  sleep 3
+  systemctl stop unattended-upgrades
+  wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/20auto-upgrades -O /etc/apt/apt.conf.d/20auto-upgrades
+  wget $GIT/$REPO/$BRANCH/Unattended-Security-Updates/50debian-unattended-upgrades -O /etc/apt/apt.conf.d/50unattended-upgrades
+fi
+
+TERM=ansi whiptail --title "Pi Automation" --infobox "Configuring Homer." 8 78
+sleep 3
 if [[ $OPTIONS == *"Homer"* ]]; then
  if [[ ! -z "$ISP" ]]; then
    isp=$(echo "$ISP" | tr '[:upper:]' '[:lower:]')
@@ -369,6 +396,7 @@ if [[ $OPTIONS == *"Homer"* ]]; then
       echo "        tagstyle: "is-info"" >> /var/www/html/assets/config.yml
       echo "        url: "http://IP:8080/"" >> /var/www/html/assets/config.yml
       echo "        target: "_blank"" >> /var/www/html/assets/config.yml
+      sed -i "s/IP/$IP/g" /var/www/html/assets/config.yml
     fi
     if [[ $OPTIONS == *"Node-RED"* ]]; then
       echo "      - name: "NodeRED"" >> /var/www/html/assets/config.yml
@@ -377,6 +405,7 @@ if [[ $OPTIONS == *"Homer"* ]]; then
       echo "        tagstyle: "is-info"" >> /var/www/html/assets/config.yml
       echo "        url: "http://IP:1880/"" >> /var/www/html/assets/config.yml
       echo "        target: "_blank"" >> /var/www/html/assets/config.yml
+      sed -i "s/IP/$IP/g" /var/www/html/assets/config.yml
     fi
     if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
       echo "      - name: "Zigbee2MQTT"" >> /var/www/html/assets/config.yml
@@ -385,6 +414,7 @@ if [[ $OPTIONS == *"Homer"* ]]; then
       echo "        tagstyle: "is-info"" >> /var/www/html/assets/config.yml
       echo "        url: "http://IP:5002/"" >> /var/www/html/assets/config.yml
       echo "        target: "_blank" " >> /var/www/html/assets/config.yml
+      sed -i "s/IP/$IP/g" /var/www/html/assets/config.yml
     fi
   fi
 fi
@@ -400,6 +430,8 @@ echo "" >> /boot/config.txt
 echo "#Reduce allocated GPU Memory since we're running headless" >> /boot/config.txt
 echo "gpu_mem=16" >> /boot/config.txt
 
+TERM=ansi whiptail --title "Pi Automation" --infobox "Optimizing SD Card." 8 78
+sleep 3
 if [[ $PI4 == "yes" ]] && [[ $UNSAFE == "no" ]]; then
   echo "" >> /etc/fstab
   echo "#Mounting /tmp folder to RAM so it reduces SD Card wear" >> /etc/fstab
@@ -410,6 +442,8 @@ curl -L https://github.com/azlux/log2ram/archive/master.tar.gz -o /tmp/log2ram.t
 tar zxfv /tmp/log2ram.tar.gz -C /tmp/
 cd /tmp/log2ram-master/
 chmod +x install.sh && sudo ./install.sh
+sed -i 's/apache2.service/nginx.service/g' /etc/systemd/system/log2ram.service
+systemctl daemon-reload
 cd ~
 
 if [[ $UNSAFE == "no" ]]; then
@@ -419,7 +453,7 @@ fi
 sed -i -e 's/MAIL=true/MAIL=false/g' /etc/log2ram.conf
 journalctl --vacuum-size=32M
 systemctl restart systemd-journald
-rm -rf /var/log/*
+rm -rf /var/log/journal
 
 if [[ $PI4 == "no" ]]; then
   sed -i -e 's/# CPU_DEFAULT_GOVERNOR="ondemand"/CPU_DEFAULT_GOVERNOR="performance"/g' /etc/default/cpu_governor
@@ -438,11 +472,21 @@ sed -i 's/\s\+/\n/g' /etc/installedmodules
 sed -i 's/\"//g' /etc/installedmodules
 
 
+##---------------##
+#   Cleaning up   #
+##---------------##
+
+TERM=ansi whiptail --title "Pi Automation" --infobox "Cleaning up unnecessary packages." 8 78
+sleep 3
+
+$PKRM dphys-swapfile* manpages* p7zip* vim* pigz* strace* rng-tools* manpages* triggerhappy* gawk python3-cmarkgfm attr libxxhash-dev libattr1-dev liblz4-dev libzstd-dev acl libacl1-dev
+$PKARM
+
 ##-------------##
 #   Finishing   #
 ##-------------##
 
-TERM=ansi whiptail --title "Pi Automation" --infobox "   Finishing." 8 78
+TERM=ansi whiptail --title "Pi Automation" --infobox "Finishing." 8 78
 sleep 3
 
 wget $GIT/$REPO/$BRANCH/Updater.sh -O /opt/updater.sh
