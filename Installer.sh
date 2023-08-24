@@ -7,7 +7,15 @@
 AGREE=yes
 SKIPinfo=yes
 SKIPoptions=no
-#OPTIONS='"Domoticz" "Node-RED" "Zigbee2MQTT" "MQTT-Broker" "Unattended-Upgrades" "Monitor-Service" "Homer"'
+SKIPhomer=no
+
+if [[ $SKIPoptions == "yes" ]]; then
+OPTIONS='"Domoticz" "Node-RED" "Zigbee2MQTT" "MQTT-Broker" "Unattended-Upgrades" "Monitor-Service" "Homer"'
+fi
+if [[ $SKIPhomer == "yes" ]]; then
+ISP=Ziggo
+ROUTE=$(ip route show default | awk '/default/ {print $3}')
+fi
 
 ##---------------##
 #   Static Vars   #
@@ -121,16 +129,16 @@ if [[ $SKIPoptions != "yes" ]]; then
   "Monitor-Service" "Autologin the Pi user to show system and service statuses. (usefull with TFT)" OFF 3>&1 1>&2 2>&3)
 fi
 
-if [[ $OPTIONS == *"Homer"* ]]; then
-  ISP=$(whiptail --title "Configure Options" --radiolist \
-  "Who is your ISP?" 12 60 4 \
-  "Ziggo" "Is my internet provider." ON \
-  "KPN" "Is my internet provider." OFF \
-  "T-Mobile" "Is my internet provider." OFF \
-  "Other" "I don't see my provider listed here." OFF 3>&1 1>&2 2>&3)
-  ROUTE=$(ip route show default | awk '/default/ {print $3}')
+if [[ $SKIPhomer != "yes" ]]; then
+  if [[ $OPTIONS == *"Homer"* ]]; then
+    ISP=$(whiptail --title "Configure Options" --radiolist \
+    "Who is your ISP?" 12 60 4 \
+    "Ziggo" "Is my internet provider." ON \
+    "KPN" "Is my internet provider." OFF \
+    "T-Mobile" "Is my internet provider." OFF \
+    "Other" "I don't see my provider listed here." OFF 3>&1 1>&2 2>&3)
+  fi
 fi
-
 
 ##-------------------##
 #   Pre-Configuring   #
@@ -282,8 +290,11 @@ if [[ $OPTIONS == *"Homer"* ]]; then
   wget $GIT/$REPO/$BRANCH/Homer/site.conf -O /etc/nginx/sites-enabled/dashboard
   wget $GIT/$REPO/$BRANCH/Homer/dashboard.zip -O /tmp/dashboard.zip
   mkdir -p /var/www/html
+  mkdir -p /var/log/nginx/
+  systemctl enable --now nginx  
+  rm /etc/nginx/sites-enabled/default
+  systemctl stop nginx
   unzip /tmp/dashboard.zip -d /var/www/html/
-  systemctl enable nginx  
 fi
 
 ##---------------##
@@ -320,7 +331,6 @@ if [[ $OPTIONS == *"Node-RED"* ]]; then
 fi
 if [[ $OPTIONS == *"Homer"* ]]; then
   ufw allow 80/tcp
-  ufw allow 80/udp
 fi
 
 ufw limit 22/tcp
@@ -328,18 +338,21 @@ echo "y" | ufw enable
 
 if [[ $OPTIONS == *"Homer"* ]]; then
  if [[ ! -z "$ISP" ]]; then
+   isp=$(echo "$ISP" | tr '[:upper:]' '[:lower:]')
+   ROUTE=$(ip route show default | awk '/default/ {print $3}')
    echo "" >> /var/www/html/assets/config.yml
    echo "  - name: "Network"" >> /var/www/html/assets/config.yml
    echo "    icon: "fa-solid fa-server"" >> /var/www/html/assets/config.yml
    echo "    items:" >> /var/www/html/assets/config.yml
    echo "      - name: "PROVIDER Modem"" >> /var/www/html/assets/config.yml
-   ISP=$(echo "$ISP" | tr '[:upper:]' '[:lower:]')
-   echo "        logo: "assets/tools/PROVIDER.png"" >> /var/www/html/assets/config.yml
-   echo "        subtitle: "Network Management"" >> /var/www/html/assets/config.yml
-   echo "        tag: "PROVIDER, network"" >> /var/www/html/assets/config.yml
+   echo "        logo: "assets/tools/provider.png"" >> /var/www/html/assets/config.yml
+   echo "        tag: "provider, network"" >> /var/www/html/assets/config.yml
    echo "        tagstyle: "is-primary"" >> /var/www/html/assets/config.yml
    echo "        url: "GATEWAY"" >> /var/www/html/assets/config.yml
    echo "        target: "_blank"" >> /var/www/html/assets/config.yml
+   sed -i "s/PROVIDER/$ISP/g" /var/www/html/assets/config.yml
+   sed -i "s/provider/$isp/g" /var/www/html/assets/config.yml
+   sed -i "s/GATEWAY/http\:\/\/$ROUTE/g" /var/www/html/assets/config.yml
   fi
 fi
 
@@ -439,7 +452,9 @@ sed -i -e "s/%name%/$NAME/g" /etc/profile.d/greeting.sh
 mkdir -p /opt/backups/timestamps/
 echo "Installed on: $DATE" > /opt/backups/timestamps/OS.update
 
-
+if [[ $OPTIONS == *"Zigbee2MQTT"* ]]; then
+whiptail --title "Done!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
+fi
 
 if [[ $OPTIONS == *"Homer"* ]]; then
   whiptail --title "Info" --msgbox "After a reboot your dashboard and all configured services are available on:\nhttp://$IP" 8 79
@@ -454,7 +469,6 @@ if [[ $OPTIONS == *"Homer"* ]]; then
   fi
   if grep -q Zigbee2MQTT "/etc/installedmodules"; then
     echo "Installed on: $DATE" > /opt/backups/timestamps/Zigbee2MQTT.update
-    whiptail --title "Pi Automation!" --msgbox "Please insert the Zigbee Dongle into a USB 2.0 port. Press OK to continue." 8 78
     whiptail --title "Remember" --msgbox "After a reboot Zigbee2MQTT is accessible on:\nhttp://$IP:5002" 8 78
   fi
 fi
